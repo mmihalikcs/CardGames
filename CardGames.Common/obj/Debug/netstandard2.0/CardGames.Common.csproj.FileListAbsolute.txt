@@ -1,9 +1,0 @@
-C:\Users\mmiha\source\repos\CardGames\CardGames.Common\obj\Debug\netstandard2.0\CardGames.Common.csprojAssemblyReference.cache
-C:\Users\mmiha\source\repos\CardGames\CardGames.Common\obj\Debug\netstandard2.0\CardGames.Common.csproj.CoreCompileInputs.cache
-C:\Users\mmiha\source\repos\CardGames\CardGames.Common\obj\Debug\netstandard2.0\CardGames.Common.AssemblyInfoInputs.cache
-C:\Users\mmiha\source\repos\CardGames\CardGames.Common\obj\Debug\netstandard2.0\CardGames.Common.AssemblyInfo.cs
-C:\Users\mmiha\source\repos\CardGames\CardGames.Common\bin\Debug\netstandard2.0\M2.CardGames.Common.deps.json
-C:\Users\mmiha\source\repos\CardGames\CardGames.Common\bin\Debug\netstandard2.0\M2.CardGames.Common.dll
-C:\Users\mmiha\source\repos\CardGames\CardGames.Common\bin\Debug\netstandard2.0\M2.CardGames.Common.pdb
-C:\Users\mmiha\source\repos\CardGames\CardGames.Common\obj\Debug\netstandard2.0\M2.CardGames.Common.dll
-C:\Users\mmiha\source\repos\CardGames\CardGames.Common\obj\Debug\netstandard2.0\M2.CardGames.Common.pdb

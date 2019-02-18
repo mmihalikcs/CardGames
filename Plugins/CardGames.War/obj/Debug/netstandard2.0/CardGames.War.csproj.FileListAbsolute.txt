@@ -1,9 +1,0 @@
-C:\Users\mmiha\source\repos\CardGames\Plugins\CardGames.War\bin\Debug\netstandard2.0\M2.CardGames.War.deps.json
-C:\Users\mmiha\source\repos\CardGames\Plugins\CardGames.War\bin\Debug\netstandard2.0\M2.CardGames.War.dll
-C:\Users\mmiha\source\repos\CardGames\Plugins\CardGames.War\bin\Debug\netstandard2.0\M2.CardGames.War.pdb
-C:\Users\mmiha\source\repos\CardGames\Plugins\CardGames.War\obj\Debug\netstandard2.0\CardGames.War.csprojAssemblyReference.cache
-C:\Users\mmiha\source\repos\CardGames\Plugins\CardGames.War\obj\Debug\netstandard2.0\CardGames.War.csproj.CoreCompileInputs.cache
-C:\Users\mmiha\source\repos\CardGames\Plugins\CardGames.War\obj\Debug\netstandard2.0\CardGames.War.AssemblyInfoInputs.cache
-C:\Users\mmiha\source\repos\CardGames\Plugins\CardGames.War\obj\Debug\netstandard2.0\CardGames.War.AssemblyInfo.cs
-C:\Users\mmiha\source\repos\CardGames\Plugins\CardGames.War\obj\Debug\netstandard2.0\M2.CardGames.War.dll
-C:\Users\mmiha\source\repos\CardGames\Plugins\CardGames.War\obj\Debug\netstandard2.0\M2.CardGames.War.pdb
