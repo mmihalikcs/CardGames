@@ -1,4 +1,7 @@
 ﻿using M2.CardGames.Common;
+using M2.CardGames.Common.Services;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +14,15 @@ namespace M2.CardGames.Core
 
         static void Main(string[] args)
         {
+            // INIT
+            var serviceCollection = new ServiceCollection()
+                .AddLogging()
+                .AddSingleton<IAssemblyLoaderService, AssemblyLoaderService>()
+                .BuildServiceProvider();
+                                
+            // Main Code
+
+
             int selection = -1;
             while (!_CommandDictionary.Keys.Contains(selection))
             {
