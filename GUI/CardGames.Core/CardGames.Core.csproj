@@ -8,15 +8,15 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <OutputPath>..\Deploy\Debug\</OutputPath>
+    <OutputPath>..\..\Deploy\Debug\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <OutputPath>..\Deploy\Release\</OutputPath>
+    <OutputPath>..\..\Deploy\Release\</OutputPath>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CardGames.Common\CardGames.Common.csproj" />
+    <ProjectReference Include="..\..\CardGames.Common\CardGames.Common.csproj" />
   </ItemGroup>
 
 </Project>
