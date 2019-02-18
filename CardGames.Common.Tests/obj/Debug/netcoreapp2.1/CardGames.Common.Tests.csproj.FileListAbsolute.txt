@@ -1,0 +1,17 @@
+C:\Users\mmiha\source\repos\CardGames\CardGames.Common.Tests\bin\Debug\netcoreapp2.1\Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll
+C:\Users\mmiha\source\repos\CardGames\CardGames.Common.Tests\bin\Debug\netcoreapp2.1\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.Interface.dll
+C:\Users\mmiha\source\repos\CardGames\CardGames.Common.Tests\bin\Debug\netcoreapp2.1\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.dll
+C:\Users\mmiha\source\repos\CardGames\CardGames.Common.Tests\bin\Debug\netcoreapp2.1\M2.CardGames.Common.Tests.deps.json
+C:\Users\mmiha\source\repos\CardGames\CardGames.Common.Tests\bin\Debug\netcoreapp2.1\M2.CardGames.Common.Tests.runtimeconfig.json
+C:\Users\mmiha\source\repos\CardGames\CardGames.Common.Tests\bin\Debug\netcoreapp2.1\M2.CardGames.Common.Tests.runtimeconfig.dev.json
+C:\Users\mmiha\source\repos\CardGames\CardGames.Common.Tests\bin\Debug\netcoreapp2.1\M2.CardGames.Common.Tests.dll
+C:\Users\mmiha\source\repos\CardGames\CardGames.Common.Tests\bin\Debug\netcoreapp2.1\M2.CardGames.Common.Tests.pdb
+C:\Users\mmiha\source\repos\CardGames\CardGames.Common.Tests\bin\Debug\netcoreapp2.1\M2.CardGames.Common.dll
+C:\Users\mmiha\source\repos\CardGames\CardGames.Common.Tests\bin\Debug\netcoreapp2.1\M2.CardGames.Common.pdb
+C:\Users\mmiha\source\repos\CardGames\CardGames.Common.Tests\obj\Debug\netcoreapp2.1\CardGames.Common.Tests.csprojAssemblyReference.cache
+C:\Users\mmiha\source\repos\CardGames\CardGames.Common.Tests\obj\Debug\netcoreapp2.1\CardGames.Common.Tests.csproj.CoreCompileInputs.cache
+C:\Users\mmiha\source\repos\CardGames\CardGames.Common.Tests\obj\Debug\netcoreapp2.1\CardGames.Common.Tests.AssemblyInfoInputs.cache
+C:\Users\mmiha\source\repos\CardGames\CardGames.Common.Tests\obj\Debug\netcoreapp2.1\CardGames.Common.Tests.AssemblyInfo.cs
+C:\Users\mmiha\source\repos\CardGames\CardGames.Common.Tests\obj\Debug\netcoreapp2.1\CardGames.Common.Tests.csproj.CopyComplete
+C:\Users\mmiha\source\repos\CardGames\CardGames.Common.Tests\obj\Debug\netcoreapp2.1\M2.CardGames.Common.Tests.dll
+C:\Users\mmiha\source\repos\CardGames\CardGames.Common.Tests\obj\Debug\netcoreapp2.1\M2.CardGames.Common.Tests.pdb
