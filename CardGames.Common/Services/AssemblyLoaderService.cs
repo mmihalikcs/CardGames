@@ -1,8 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Text;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 
 namespace M2.CardGames.Common.Services
 {
@@ -24,7 +23,7 @@ namespace M2.CardGames.Common.Services
         /// <returns></returns>
         public bool VerifyAssemblyInterfaces(string assemblyPath, Type interfaceType)
         {
-            Assembly reflectedAssembly = Assembly.ReflectionOnlyLoadFrom(assemblyPath);
+
 
             foreach (var type in reflectedAssembly.GetTypes())
             {
