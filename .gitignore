@@ -4,7 +4,7 @@
 
 /Plugins/Deploy/Debug/netstandard2.0
 /Deploy/Debug
-/.vs/CardGames/v15
+/.vs
 /CardGames.Common/obj
 /CardGames.Common.Tests/obj
 /GUI/CardGames.Core/obj

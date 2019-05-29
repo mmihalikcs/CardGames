@@ -1,17 +1,21 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
-using System.Reflection.Metadata;
-using System.Reflection.Metadata.Ecma335;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.Loader;
 
 namespace M2.CardGames.Common.Services
 {
     public class AssemblyLoaderService : IAssemblyLoaderService
     {
+        private readonly List<AssemblyLoadContext> _AssemblyLoadContexts;
         private readonly ILogger<AssemblyLoaderService> _Logger;
 
         public AssemblyLoaderService(ILoggerFactory loggingFactory)
         {
             _Logger = loggingFactory.CreateLogger<AssemblyLoaderService>();
+            _AssemblyLoadContexts = new List<AssemblyLoadContext>(10);
         }
 
         /// <summary>
@@ -23,14 +27,36 @@ namespace M2.CardGames.Common.Services
         /// <returns></returns>
         public bool VerifyAssemblyInterfaces(string assemblyPath, Type interfaceType)
         {
+            return false;
+        }
 
-
-            foreach (var type in reflectedAssembly.GetTypes())
+        // Load Assembly
+        public bool LoadPluginAssembly(string assemblyPath)
+        {
+            try
             {
-                _Logger.LogDebug($"Type '[{type}]'");
-                if (interfaceType.IsAssignableFrom(type)) return true;
+                AssemblyLoadContext context = new AssemblyLoadContext(Path.GetFileNameWithoutExtension(assemblyPath), true);
+                context.LoadFromAssemblyPath(assemblyPath);
+                _AssemblyLoadContexts.Add(context);
+                return true;
+            }
+            catch (Exception e)
+            {
+                _Logger.LogError($"Assembly Load Exception: {e.Message}");
             }
             return false;
+        }
+
+        public bool UnloadPluginAssembly(string contextName)
+        {
+            var context = _AssemblyLoadContexts.Where(x => string.Compare(x.Name, contextName, true) == 0).First();
+            // Null Check
+            if (context == null)
+                return false;
+            // Unload
+            context.Unload();
+            _AssemblyLoadContexts.Remove(context);
+            return true;
         }
 
     }

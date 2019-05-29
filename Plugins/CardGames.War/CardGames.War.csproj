@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <AssemblyName>M2.CardGames.War</AssemblyName>
     <RootNamespace>M2.CardGames.War</RootNamespace>
   </PropertyGroup>
