@@ -20,7 +20,6 @@ public sealed class DeckOfCards
     /// </summary>
     public void InitializeStandardDeck(bool includeJokers = false)
     {
-        // Base Rank Query
         var ranks = Enum.GetValues<Rank>().Where(x => x != Rank.None && x != Rank.Joker);
         var suits = Enum.GetValues<Suit>().Where(x => x != Suit.None).ToList();
 
@@ -36,6 +35,7 @@ public sealed class DeckOfCards
         // Add Two Jokers if jokers are enabled
         if (includeJokers)
         {
+            Cards.Add(new Card(Suit.None, Rank.Joker));
             Cards.Add(new Card(Suit.None, Rank.Joker));
         }
     }

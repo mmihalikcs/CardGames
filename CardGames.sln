@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.0.11205.157 d18.0
+VisualStudioVersion = 18.0.11205.157
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "source", "source", "{B8EFCA5F-814F-285C-A8CB-F00F14650265}"
 EndProject
@@ -18,6 +18,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardGames.Domain.Tests", "source\tests\CardGames.Domain.Tests\CardGames.Domain.Tests.csproj", "{C757E4AC-87CC-410E-BC6B-078A4FE20911}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardGames.Application.Tests", "source\tests\CardGames.Application.Tests\CardGames.Application.Tests.csproj", "{F1CEFA64-CB62-D259-F77A-F61E9943E074}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "plugins", "plugins", "{ADE413A5-CD92-4392-AF9B-2040575E1914}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardGames.WAR", "source\plugins\CardGames.WAR\CardGames.WAR.csproj", "{F7743833-979F-310C-82E9-38FF228B3E2F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardGames.GoFish", "source\plugins\CardGames.GoFish\CardGames.GoFish.csproj", "{1095854D-A587-4223-A06F-66E7C1B0E7A1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -101,6 +107,30 @@ Global
 		{F1CEFA64-CB62-D259-F77A-F61E9943E074}.Release|x64.Build.0 = Release|Any CPU
 		{F1CEFA64-CB62-D259-F77A-F61E9943E074}.Release|x86.ActiveCfg = Release|Any CPU
 		{F1CEFA64-CB62-D259-F77A-F61E9943E074}.Release|x86.Build.0 = Release|Any CPU
+		{F7743833-979F-310C-82E9-38FF228B3E2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F7743833-979F-310C-82E9-38FF228B3E2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F7743833-979F-310C-82E9-38FF228B3E2F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F7743833-979F-310C-82E9-38FF228B3E2F}.Debug|x64.Build.0 = Debug|Any CPU
+		{F7743833-979F-310C-82E9-38FF228B3E2F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F7743833-979F-310C-82E9-38FF228B3E2F}.Debug|x86.Build.0 = Debug|Any CPU
+		{F7743833-979F-310C-82E9-38FF228B3E2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F7743833-979F-310C-82E9-38FF228B3E2F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F7743833-979F-310C-82E9-38FF228B3E2F}.Release|x64.ActiveCfg = Release|Any CPU
+		{F7743833-979F-310C-82E9-38FF228B3E2F}.Release|x64.Build.0 = Release|Any CPU
+		{F7743833-979F-310C-82E9-38FF228B3E2F}.Release|x86.ActiveCfg = Release|Any CPU
+		{F7743833-979F-310C-82E9-38FF228B3E2F}.Release|x86.Build.0 = Release|Any CPU
+		{1095854D-A587-4223-A06F-66E7C1B0E7A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1095854D-A587-4223-A06F-66E7C1B0E7A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1095854D-A587-4223-A06F-66E7C1B0E7A1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{1095854D-A587-4223-A06F-66E7C1B0E7A1}.Debug|x64.Build.0 = Debug|Any CPU
+		{1095854D-A587-4223-A06F-66E7C1B0E7A1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{1095854D-A587-4223-A06F-66E7C1B0E7A1}.Debug|x86.Build.0 = Debug|Any CPU
+		{1095854D-A587-4223-A06F-66E7C1B0E7A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1095854D-A587-4223-A06F-66E7C1B0E7A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1095854D-A587-4223-A06F-66E7C1B0E7A1}.Release|x64.ActiveCfg = Release|Any CPU
+		{1095854D-A587-4223-A06F-66E7C1B0E7A1}.Release|x64.Build.0 = Release|Any CPU
+		{1095854D-A587-4223-A06F-66E7C1B0E7A1}.Release|x86.ActiveCfg = Release|Any CPU
+		{1095854D-A587-4223-A06F-66E7C1B0E7A1}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -112,6 +142,8 @@ Global
 		{904A9897-BFA0-4A6F-9B8D-ED0BA49D15C6} = {B8EFCA5F-814F-285C-A8CB-F00F14650265}
 		{C757E4AC-87CC-410E-BC6B-078A4FE20911} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{F1CEFA64-CB62-D259-F77A-F61E9943E074} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{F7743833-979F-310C-82E9-38FF228B3E2F} = {ADE413A5-CD92-4392-AF9B-2040575E1914}
+		{1095854D-A587-4223-A06F-66E7C1B0E7A1} = {ADE413A5-CD92-4392-AF9B-2040575E1914}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {181FED2C-D8DE-4165-ABE1-55A5BF37F854}

@@ -1,11 +1,15 @@
 using System.Runtime.Loader;
 using Microsoft.Extensions.Logging;
 using CardGames.Domain.Interfaces;
+using System.IO;
 
 namespace CardGames.Application.Services;
 
 public class AssemblyLoaderService : IAssemblyLoaderService
 {
+    public IReadOnlyList<AssemblyLoadContext> LoadedAssemblies => _AssemblyLoadContexts.AsReadOnly();
+
+    // Fields
     private readonly List<AssemblyLoadContext> _AssemblyLoadContexts;
     private readonly ILogger<AssemblyLoaderService> _Logger;
 
@@ -27,7 +31,28 @@ public class AssemblyLoaderService : IAssemblyLoaderService
         return false;
     }
 
-    // Load Assembly
+    public bool VerifyPluginAssemblies(string assemblyLoadPath, IEnumerable<Type> interfaceTypes)
+    {
+        foreach (var files in Directory.GetFiles(assemblyLoadPath, "*.plugin.dll"))
+        {
+            try
+            {
+                _Logger.LogDebug($"Loading assembly '{files}'");
+                var loadResult = LoadPluginAssembly(files);
+            }
+            catch
+            {
+
+            }
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// Load Assemblies
+    /// </summary>
+    /// <param name="assemblyPath"></param>
+    /// <returns></returns>
     public bool LoadPluginAssembly(string assemblyPath)
     {
         try
@@ -44,6 +69,11 @@ public class AssemblyLoaderService : IAssemblyLoaderService
         return false;
     }
 
+    /// <summary>
+    /// Unload Assemblies
+    /// </summary>
+    /// <param name="contextName"></param>
+    /// <returns></returns>
     public bool UnloadPluginAssembly(string contextName)
     {
         var context = _AssemblyLoadContexts.Where(x => string.Compare(x.Name, contextName, true) == 0).First();
