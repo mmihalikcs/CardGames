@@ -15,6 +15,7 @@ namespace CardGames.Domain.Enums
         Jack,
         Queen,
         King,
-        Ace
+        Ace,
+        Joker
     }
 }

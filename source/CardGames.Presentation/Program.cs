@@ -1,8 +1,20 @@
-using System;
-using CardGames.Domain;
-using CardGames.Infrastructure;
+using CardGames.Application.Services;
+using CardGames.Domain.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
-Console.WriteLine("CardGames.Presentation starting...");
-Console.WriteLine(DomainMarker.Name);
-var infra = new InfrastructureService();
-Console.WriteLine(infra.GetInfo());
+// Generic Host Creation
+using IHost host = Host.CreateDefaultBuilder(args)
+    .ConfigureServices((context, services) =>
+    {
+        services.AddLogging(configure => configure.AddConsole());
+
+        // DI
+        services.AddSingleton<IAssemblyLoaderService, AssemblyLoaderService>();
+    })
+    .Build();
+
+
+// Run the host
+await host.RunAsync();

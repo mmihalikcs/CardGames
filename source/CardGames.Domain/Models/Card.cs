@@ -20,7 +20,21 @@ public class Card
         }
     }
 
-    public Rank Rank { get; init; }
+    public Rank Rank
+    { 
+        get; 
+        init
+        {
+            if (value == Rank.None)
+            {
+                throw new ArgumentException(nameof(Rank));
+            }
+            else
+            {
+                field = value;
+            }
+        }
+    }
 
     public Card(Suit suit, Rank rank)
     {
