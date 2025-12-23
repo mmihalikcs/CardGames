@@ -1,4 +1,5 @@
-﻿using CardGames.Domain.Enums;
+﻿using CardGames.Common.Tests;
+using CardGames.Domain.Enums;
 using CardGames.Domain.Models;
 using Xunit;
 
@@ -9,6 +10,7 @@ public sealed class CardTests
     public CardTests() { }
 
     [Fact]
+    [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
     public void Postive_CreateCard()
     {
         var card = new Card(Suit.Clubs, Rank.Queen);
@@ -17,6 +19,7 @@ public sealed class CardTests
     }
 
     [Fact]
+    [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
     public void Negative_CreateCardWithBadRank()
     {
         try
@@ -30,6 +33,7 @@ public sealed class CardTests
     }
 
     [Fact]
+    [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
     public void Negative_CreateCardWithBadSuit()
     {
         try

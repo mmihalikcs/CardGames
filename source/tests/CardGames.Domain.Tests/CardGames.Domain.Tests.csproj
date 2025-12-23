@@ -15,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\CardGames.Domain\CardGames.Domain.csproj" />
+    <ProjectReference Include="..\CardGames.Common.Tests\CardGames.Common.Tests.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Fixtures\" />

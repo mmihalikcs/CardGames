@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardGames.WAR", "source\plu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardGames.GoFish", "source\plugins\CardGames.GoFish\CardGames.GoFish.csproj", "{1095854D-A587-4223-A06F-66E7C1B0E7A1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CardGames.Common.Tests", "source\tests\CardGames.Common.Tests\CardGames.Common.Tests.csproj", "{3DD6DCE4-4389-4C69-885D-324DCDA30E73}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -131,6 +133,18 @@ Global
 		{1095854D-A587-4223-A06F-66E7C1B0E7A1}.Release|x64.Build.0 = Release|Any CPU
 		{1095854D-A587-4223-A06F-66E7C1B0E7A1}.Release|x86.ActiveCfg = Release|Any CPU
 		{1095854D-A587-4223-A06F-66E7C1B0E7A1}.Release|x86.Build.0 = Release|Any CPU
+		{3DD6DCE4-4389-4C69-885D-324DCDA30E73}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DD6DCE4-4389-4C69-885D-324DCDA30E73}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DD6DCE4-4389-4C69-885D-324DCDA30E73}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3DD6DCE4-4389-4C69-885D-324DCDA30E73}.Debug|x64.Build.0 = Debug|Any CPU
+		{3DD6DCE4-4389-4C69-885D-324DCDA30E73}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3DD6DCE4-4389-4C69-885D-324DCDA30E73}.Debug|x86.Build.0 = Debug|Any CPU
+		{3DD6DCE4-4389-4C69-885D-324DCDA30E73}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DD6DCE4-4389-4C69-885D-324DCDA30E73}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3DD6DCE4-4389-4C69-885D-324DCDA30E73}.Release|x64.ActiveCfg = Release|Any CPU
+		{3DD6DCE4-4389-4C69-885D-324DCDA30E73}.Release|x64.Build.0 = Release|Any CPU
+		{3DD6DCE4-4389-4C69-885D-324DCDA30E73}.Release|x86.ActiveCfg = Release|Any CPU
+		{3DD6DCE4-4389-4C69-885D-324DCDA30E73}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -144,6 +158,7 @@ Global
 		{F1CEFA64-CB62-D259-F77A-F61E9943E074} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{F7743833-979F-310C-82E9-38FF228B3E2F} = {ADE413A5-CD92-4392-AF9B-2040575E1914}
 		{1095854D-A587-4223-A06F-66E7C1B0E7A1} = {ADE413A5-CD92-4392-AF9B-2040575E1914}
+		{3DD6DCE4-4389-4C69-885D-324DCDA30E73} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {181FED2C-D8DE-4165-ABE1-55A5BF37F854}
