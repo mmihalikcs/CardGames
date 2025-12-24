@@ -68,8 +68,10 @@ public sealed class DeckOfCards
         return Cards.Remove(card);
     }
 
-    // Method to shuffle the deck
-    public void Shuffle()
+    /// <summary>
+    /// Shuffle the deck randomly
+    /// </summary>
+    public void ShuffleDeck()
     {
         var random = new Random();
         int n = Cards.Count;

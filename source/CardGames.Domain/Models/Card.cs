@@ -4,40 +4,18 @@ namespace CardGames.Domain.Models;
 
 public class Card
 {
-    public Suit Suit
-    {
-        get;
-        init
-        {
-            if (value == Suit.None)
-            {
-                throw new ArgumentException(nameof(Suit));
-            }
-            else
-            {
-                field = value;
-            }
-        }
-    }
+    public Suit Suit { get; init; }
 
-    public Rank Rank
-    { 
-        get; 
-        init
-        {
-            if (value == Rank.None)
-            {
-                throw new ArgumentException(nameof(Rank));
-            }
-            else
-            {
-                field = value;
-            }
-        }
-    }
+    public Rank Rank { get; init; }
 
     public Card(Suit suit, Rank rank)
     {
+        if (rank == Rank.None)
+            throw new ArgumentException(nameof(rank));
+        if (suit == Suit.None && rank != Rank.Joker)
+            throw new ArgumentException(nameof(suit));
+
+        // Set the values
         Suit = suit;
         Rank = rank;
     }
