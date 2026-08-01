@@ -1,8 +1,8 @@
 ﻿using CardGames.Domain.Interfaces;
 
-namespace CardGames.WAR;
+namespace CardGames.GoFish;
 
-public sealed class WARPlugin : IPlugin
+public sealed class GoFishPlugin : IPlugin
 {
     public string Name => "Go Fish";
 

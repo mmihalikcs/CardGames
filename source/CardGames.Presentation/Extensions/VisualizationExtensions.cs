@@ -11,8 +11,8 @@ public static class VisualizationExtensions
     {
         public string GetEnumDescription()
         {
-            FieldInfo fi = enumeration.GetType().GetField(enumeration?.ToString());
-            DescriptionAttribute[] attributes = fi.GetCustomAttributes(typeof(DescriptionAttribute), false) as DescriptionAttribute[];
+            FieldInfo? fi = enumeration.GetType().GetField(enumeration.ToString());
+            DescriptionAttribute[]? attributes = fi?.GetCustomAttributes(typeof(DescriptionAttribute), false) as DescriptionAttribute[];
             if (attributes != null && attributes.Any())
             {
                 return attributes.First().Description;

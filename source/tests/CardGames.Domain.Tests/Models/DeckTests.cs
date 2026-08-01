@@ -120,4 +120,35 @@ public sealed class DeckTests
         deckOfCards.ShuffleDeck();
         Assert.False(previousOrder.SequenceEqual(deckOfCards.CurrentDeck));
     }
+
+    [Fact]
+    [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
+    public void Postive_ShuffleDeck_PreservesAllCards()
+    {
+        var deckOfCards = new DeckOfCards();
+        deckOfCards.InitializeStandardDeck();
+        var beforeShuffle = new List<Card>(deckOfCards.CurrentDeck)
+            .OrderBy(c => c.Suit).ThenBy(c => c.Rank).ToList();
+
+        deckOfCards.ShuffleDeck();
+
+        var afterShuffle = deckOfCards.CurrentDeck
+            .OrderBy(c => c.Suit).ThenBy(c => c.Rank).ToList();
+        Assert.Equal(beforeShuffle.Count, afterShuffle.Count);
+        Assert.Equal(beforeShuffle, afterShuffle);
+    }
+
+    [Fact]
+    [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
+    public void Negative_RemoveCard_NotInDeck_ReturnsFalse()
+    {
+        var deckOfCards = new DeckOfCards();
+        deckOfCards.InitializeStandardDeck();
+        // Same rank/suit as a card already in the deck, but a distinct instance -
+        // Card has no Equals override, so this must not match by value.
+        var cardNotInDeck = new Card(Suit.Hearts, Rank.Ace);
+
+        Assert.False(deckOfCards.RemoveCard(cardNotInDeck));
+        Assert.True(deckOfCards.CurrentDeck.Count() == 52);
+    }
 }

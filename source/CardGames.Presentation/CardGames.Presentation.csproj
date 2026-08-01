@@ -8,9 +8,22 @@
   <ItemGroup>
     <ProjectReference Include="..\CardGames.Application\CardGames.Application.csproj" />
     <ProjectReference Include="..\CardGames.Infrastructure\CardGames.Infrastructure.csproj" />
+    <!-- Not compiled against: plugins are discovered and loaded at runtime via IAssemblyLoaderService,
+         not referenced directly, so they can be unloaded from a collectible AssemblyLoadContext. -->
+    <ProjectReference Include="..\plugins\CardGames.WAR\CardGames.WAR.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\plugins\CardGames.GoFish\CardGames.GoFish.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.1" />
   </ItemGroup>
+
+  <!-- Copies plugin build output next to the host executable so IAssemblyLoaderService can discover it at runtime. -->
+  <Target Name="CopyPluginAssemblies" AfterTargets="Build">
+    <ItemGroup>
+      <PluginAssemblies Include="..\plugins\CardGames.WAR\bin\$(Configuration)\$(TargetFramework)\CardGames.WAR.plugin.dll" />
+      <PluginAssemblies Include="..\plugins\CardGames.GoFish\bin\$(Configuration)\$(TargetFramework)\CardGames.GoFish.plugin.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(PluginAssemblies)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
 </Project>

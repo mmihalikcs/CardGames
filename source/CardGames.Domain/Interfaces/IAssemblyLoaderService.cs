@@ -5,4 +5,6 @@ public interface IAssemblyLoaderService
     bool VerifyAssemblyInterfaces(string assemblyPath, Type interfaceType);
     bool LoadPluginAssembly(string assemblyPath);
     bool UnloadPluginAssembly(string contextName);
+    IReadOnlyList<IPlugin> DiscoverPlugins(string directoryPath);
+    IReadOnlyList<string> GetLoadedPluginNames();
 }

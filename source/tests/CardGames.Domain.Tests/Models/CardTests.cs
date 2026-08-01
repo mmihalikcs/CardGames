@@ -20,29 +20,26 @@ public sealed class CardTests
 
     [Fact]
     [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
-    public void Negative_CreateCardWithBadRank()
+    public void Negative_CreateCardWithBadRank_Throws()
     {
-        try
-        {
-            var card = new Card(Suit.Clubs, Rank.None);
-        }
-        catch (ArgumentException ex)
-        {
-            Assert.True(ex.Message?.ToLower() == "rank");
-        }
+        var ex = Assert.Throws<ArgumentException>(() => new Card(Suit.Clubs, Rank.None));
+        Assert.Equal("rank", ex.Message);
     }
 
     [Fact]
     [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
-    public void Negative_CreateCardWithBadSuit()
+    public void Negative_CreateCardWithBadSuit_Throws()
     {
-        try
-        {
-            var card = new Card(Suit.None, Rank.Ten);
-        }
-        catch (ArgumentException ex)
-        {
-            Assert.True(ex.Message?.ToLower() == "suit");
-        }
+        var ex = Assert.Throws<ArgumentException>(() => new Card(Suit.None, Rank.Ten));
+        Assert.Equal("suit", ex.Message);
+    }
+
+    [Fact]
+    [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
+    public void Postive_CreateJokerWithNoSuit()
+    {
+        var card = new Card(Suit.None, Rank.Joker);
+        Assert.Equal(Suit.None, card.Suit);
+        Assert.Equal(Rank.Joker, card.Rank);
     }
 }

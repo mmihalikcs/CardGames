@@ -47,7 +47,8 @@ public class ConsoleRenderer
             { 1, "Play" },
             { 2, "Load Game" },
             { 3, "Unload Game" },
-            { 4, "About" },
+            { 4, "Settings" },
+            { 5, "About" },
             { 0, "Exit" },
         };
     }
