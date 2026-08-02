@@ -27,8 +27,7 @@ folders:
 source/
   CardGames.Domain/          # models, enums, public interfaces - no dependencies
   CardGames.Application/     # AssemblyLoaderService - depends on Domain only
-  CardGames.Infrastructure/  # SettingsService - depends on Domain only
-  CardGames.Presentation/    # console entry point, DI wiring, menu loop
+  CardGames.Presentation/    # console entry point, DI wiring, menu loop, SettingsService
   plugins/
     CardGames.WAR/           # WAR plugin - depends on Domain only
     CardGames.GoFish/        # Go Fish plugin - depends on Domain only
@@ -36,7 +35,6 @@ source/
 tests/
   CardGames.Domain.Tests/
   CardGames.Application.Tests/
-  CardGames.Infrastructure.Tests/
   CardGames.Presentation.Tests/
   CardGames.WAR.Tests/
   CardGames.GoFish.Tests/
@@ -57,24 +55,22 @@ depends on, directly or indirectly:
   `ISettingsService`
 
 Because plugins only reference Domain, a plugin assembly never needs to
-reference Presentation, Application, or Infrastructure, which keeps the
-plugin surface area small and stable.
+reference Presentation or Application, which keeps the plugin surface area
+small and stable.
 
 **CardGames.Application** implements `IAssemblyLoaderService` via
 `AssemblyLoaderService` — the plugin discovery/load/unload logic described
 below.
 
-**CardGames.Infrastructure** implements `ISettingsService` via
-`SettingsService`, which persists `ApplicationSettings` (currently just the
-configured plugin directory) as JSON under the user's local application data
-folder (`%APPDATA%/CardGames/settings.json` or platform equivalent).
-
 **CardGames.Presentation** is the console entry point (`Program.cs`). It
-builds a generic `Microsoft.Extensions.Hosting` host, registers the services
-above via DI, and runs a numbered console menu loop (`ConsoleRenderer`) for
-loading, playing, and unloading game plugins. `ConsoleGameIO` implements
-`IGameIO` on top of `Console.Write`/`Console.ReadLine`, which is the only I/O
-surface a plugin's `IGameManager` is allowed to touch.
+builds a generic `Microsoft.Extensions.Hosting` host, registers services via
+DI, and runs a numbered console menu loop (`ConsoleRenderer`) for loading,
+playing, and unloading game plugins. `ConsoleGameIO` implements `IGameIO` on
+top of `Console.Write`/`Console.ReadLine`, which is the only I/O surface a
+plugin's `IGameManager` is allowed to touch. Presentation also owns the only
+`ISettingsService` implementation, `SettingsService`, which persists
+`ApplicationSettings` as JSON under the user's local application data folder
+(`%APPDATA%/CardGames/settings.json` or platform equivalent).
 
 ## Plugin loading model
 
@@ -214,8 +210,7 @@ option falls back to that when the setting is blank.
 ## Tests
 
 `tests/` mirrors the layers under `source/`: one test project per
-application/infrastructure/presentation layer and one per plugin, all using
-xUnit. `CardGames.Common.Tests` is not itself a test project — it's a shared
+application/presentation layer and one per plugin, all using xUnit. `CardGames.Common.Tests` is not itself a test project — it's a shared
 library holding cross-cutting test constants, notably `TestCaseConstants`
 (`BUILD_TEST_TRAIT_NAME` / `BUILD_TEST_TRAIT_VALUE`), used to tag tests that
 should run in the CI post-build gate:

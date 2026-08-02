@@ -1,12 +1,25 @@
 using CardGames.Application.Services;
 using CardGames.Domain.Interfaces;
 using CardGames.Domain.Models;
-using CardGames.Infrastructure.Services;
+using CardGames.Networking.Client;
+using CardGames.Networking.Dtos;
+using CardGames.Networking.Hosting;
+using CardGames.Networking.Sessions;
 using CardGames.Presentation.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
+
+// Must match CardGames.Poker.Engine.GameSettings' bounds (MinHumans=1/MaxHumans=4,
+// MinOpponents=2/MaxOpponents=5) - the networked lobby answers the setup-answer queue up front
+// with no live retry, so an out-of-range value here would desync SeatSetup.BuildSeats' prompts.
+const int MinTotalHumanPlayers = 2; // at least 1 remote player beyond the host
+const int MaxTotalHumanPlayers = 4;
+const int MinAiOpponents = 2;
+const int MaxAiOpponents = 5;
 
 // Generic Host Creation
 using IHost host = Host.CreateDefaultBuilder(args)
@@ -19,6 +32,10 @@ using IHost host = Host.CreateDefaultBuilder(args)
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IGameIO, ConsoleGameIO>();
         services.AddSingleton<ConsoleRenderer>();
+        // Cheap to register unconditionally - constructing it binds no socket. The actual
+        // Kestrel/SignalR listener only ever starts inside GameServerHost.StartAsync, which is
+        // only reachable from a code path gated by ApplicationSettings.MultiplayerEnabled.
+        services.AddSingleton<IGameSessionManager, GameSessionManager>();
     })
     .Build();
 
@@ -37,14 +54,16 @@ try
     var settingsService = host.Services.GetRequiredService<ISettingsService>();
     var gameIo = host.Services.GetRequiredService<IGameIO>();
     var consoleRenderer = host.Services.GetRequiredService<ConsoleRenderer>();
+    var sessionManager = host.Services.GetRequiredService<IGameSessionManager>();
 
     // Main Loop
     IPlugin? loadedPlugin = null;
+    var settings = settingsService.Load();
     int selection = -1;
     while (selection != 0)
     {
         consoleRenderer.DisplayMenu();
-        if (!int.TryParse(Console.ReadLine(), out int result) || !consoleRenderer.Commands.ContainsKey(result))
+        if (!int.TryParse(Console.ReadLine(), out int result) || !consoleRenderer.GetCommands().ContainsKey(result))
         {
             Console.WriteLine("\nInvalid Entry! Try Again.\n");
             continue;
@@ -61,14 +80,36 @@ try
                     break;
                 }
 
-                var variants = loadedPlugin.Variants;
-                IGameManager gameManager;
-                if (variants.Count == 0)
+                bool hostMultiplayer = false;
+                bool joinMultiplayer = false;
+                if (settings.MultiplayerEnabled && loadedPlugin.SupportsMultiplayer)
                 {
-                    Console.WriteLine($"\nStarting '{loadedPlugin.Name}'...\n");
-                    gameManager = loadedPlugin.CreateGameManager(gameIo);
+                    consoleRenderer.DisplaySubmenu(
+                        "Choose how to play",
+                        new[] { "Single Player", "Host Multiplayer Game", "Join Multiplayer Game" });
+                    if (!int.TryParse(Console.ReadLine(), out int modeChoice) || modeChoice < 0 || modeChoice > 3)
+                    {
+                        Console.WriteLine("\nInvalid selection.\n");
+                        break;
+                    }
+                    if (modeChoice == 0)
+                    {
+                        Console.WriteLine("\nCancelled.\n");
+                        break;
+                    }
+                    hostMultiplayer = modeChoice == 2;
+                    joinMultiplayer = modeChoice == 3;
                 }
-                else
+
+                if (joinMultiplayer)
+                {
+                    await JoinMultiplayerGameAsync(loadedPlugin);
+                    break;
+                }
+
+                var variants = loadedPlugin.Variants;
+                GameVariant? selectedVariant = null;
+                if (variants.Count > 0)
                 {
                     consoleRenderer.DisplaySubmenu(
                         $"Select a {loadedPlugin.Name} variant",
@@ -85,12 +126,23 @@ try
                         break;
                     }
 
-                    var selectedVariant = variants[variantChoice - 1];
-                    Console.WriteLine($"\nStarting '{loadedPlugin.Name}' ({selectedVariant.Name})...\n");
-                    gameManager = loadedPlugin.CreateGameManager(gameIo, selectedVariant);
+                    selectedVariant = variants[variantChoice - 1];
                 }
 
-                gameManager.StartGame();
+                if (hostMultiplayer)
+                {
+                    await HostMultiplayerGameAsync(loadedPlugin, selectedVariant);
+                }
+                else
+                {
+                    Console.WriteLine(selectedVariant == null
+                        ? $"\nStarting '{loadedPlugin.Name}'...\n"
+                        : $"\nStarting '{loadedPlugin.Name}' ({selectedVariant.Name})...\n");
+                    var gameManager = selectedVariant == null
+                        ? loadedPlugin.CreateGameManager(gameIo)
+                        : loadedPlugin.CreateGameManager(gameIo, selectedVariant);
+                    gameManager.StartGame();
+                }
                 break;
             case 2: // Load Game
                 var loadedSettings = settingsService.Load();
@@ -155,25 +207,180 @@ try
                 Console.Write("Enter new plugin directory (leave blank to keep current): ");
                 var newPluginDirectory = Console.ReadLine();
 
-                if (string.IsNullOrWhiteSpace(newPluginDirectory))
+                if (!string.IsNullOrWhiteSpace(newPluginDirectory))
                 {
-                    Console.WriteLine("\nNo changes made.\n");
-                    break;
+                    if (!Directory.Exists(newPluginDirectory))
+                    {
+                        Console.WriteLine($"\nWarning: '{newPluginDirectory}' does not currently exist. Saving anyway.");
+                    }
+                    currentSettings.PluginDirectory = newPluginDirectory;
                 }
 
-                if (!Directory.Exists(newPluginDirectory))
-                {
-                    Console.WriteLine($"\nWarning: '{newPluginDirectory}' does not currently exist. Saving anyway.");
-                }
+                Console.WriteLine($"\nMultiplayer enabled: {currentSettings.MultiplayerEnabled}");
+                Console.Write("Enable multiplayer? (y/n, leave blank to keep current): ");
+                var multiplayerInput = Console.ReadLine()?.Trim();
+                if (string.Equals(multiplayerInput, "y", StringComparison.OrdinalIgnoreCase))
+                    currentSettings.MultiplayerEnabled = true;
+                else if (string.Equals(multiplayerInput, "n", StringComparison.OrdinalIgnoreCase))
+                    currentSettings.MultiplayerEnabled = false;
 
-                currentSettings.PluginDirectory = newPluginDirectory;
                 settingsService.Save(currentSettings);
+                settings = currentSettings;
                 Console.WriteLine("Settings saved.\n");
                 break;
             case 5: // About
                 Console.WriteLine("\nCardGames - a plugin-based card game host.\n");
                 break;
         }
+    }
+
+    async Task HostMultiplayerGameAsync(IPlugin plugin, GameVariant? variant)
+    {
+        Console.Write("\nEnter your display name (shown to joining players): ");
+        var hostDisplayName = Console.ReadLine()?.Trim();
+        if (string.IsNullOrWhiteSpace(hostDisplayName))
+        {
+            Console.WriteLine("\nA display name is required. Cancelled.\n");
+            return;
+        }
+
+        var totalHumans = PromptForInt(
+            $"How many human players total, including you? ({MinTotalHumanPlayers}-{MaxTotalHumanPlayers}): ", MinTotalHumanPlayers, MaxTotalHumanPlayers);
+        if (totalHumans == null)
+        {
+            Console.WriteLine("\nInvalid selection. Cancelled.\n");
+            return;
+        }
+
+        var aiOpponents = PromptForInt($"How many AI opponents? ({MinAiOpponents}-{MaxAiOpponents}): ", MinAiOpponents, MaxAiOpponents);
+        if (aiOpponents == null)
+        {
+            Console.WriteLine("\nInvalid selection. Cancelled.\n");
+            return;
+        }
+
+        var joinCode = sessionManager.CreateSession(hostDisplayName, totalHumans.Value - 1, aiOpponents.Value, plugin.Name, plugin.Version);
+
+        await using var gameServerHost = new GameServerHost();
+        await gameServerHost.StartAsync(sessionManager, port: 0);
+
+        var localAddresses = Dns.GetHostEntry(Dns.GetHostName()).AddressList
+            .Where(ip => ip.AddressFamily == AddressFamily.InterNetwork)
+            .Select(ip => ip.ToString())
+            .ToList();
+
+        Console.WriteLine("\nHosting started. Share this with the other player(s):");
+        Console.WriteLine($"  Join code: {joinCode}");
+        Console.WriteLine($"  Port:      {gameServerHost.Port}");
+        if (localAddresses.Count > 0)
+            Console.WriteLine($"  Address:   {string.Join(" or ", localAddresses)}");
+
+        var lastRosterCount = 1;
+        Console.WriteLine($"\nWaiting for players to join... ({lastRosterCount}/{totalHumans})");
+        while (!sessionManager.IsSessionFull)
+        {
+            await Task.Delay(1000);
+            var roster = sessionManager.GetRoster();
+            if (roster.Count != lastRosterCount)
+            {
+                lastRosterCount = roster.Count;
+                Console.WriteLine($"Waiting for players to join... ({lastRosterCount}/{totalHumans}) - joined: {string.Join(", ", roster.Select(r => r.PlayerName))}");
+            }
+        }
+
+        Console.WriteLine("\nAll players joined! Starting the game...\n");
+        try
+        {
+            await sessionManager.StartSessionAsync(plugin, variant);
+            Console.WriteLine("\nMultiplayer session ended.\n");
+        }
+        catch (Exception ex)
+        {
+            // v1 has no reconnect/resume - a mid-game disconnect aborts the whole session.
+            Console.WriteLine($"\nMultiplayer session aborted: {ex.Message}\n");
+        }
+        finally
+        {
+            await gameServerHost.StopAsync();
+            sessionManager.EndSession();
+        }
+    }
+
+    async Task JoinMultiplayerGameAsync(IPlugin plugin)
+    {
+        Console.Write("\nHost address (IP or hostname): ");
+        var joinHostAddress = Console.ReadLine()?.Trim();
+        Console.Write("Host port: ");
+        if (!int.TryParse(Console.ReadLine(), out int joinPort))
+        {
+            Console.WriteLine("\nInvalid port. Cancelled.\n");
+            return;
+        }
+        Console.Write("Join code: ");
+        var enteredJoinCode = Console.ReadLine()?.Trim();
+        Console.Write("Your display name: ");
+        var joinDisplayName = Console.ReadLine()?.Trim();
+
+        if (string.IsNullOrWhiteSpace(joinHostAddress) || string.IsNullOrWhiteSpace(enteredJoinCode) || string.IsNullOrWhiteSpace(joinDisplayName))
+        {
+            Console.WriteLine("\nMissing required info. Cancelled.\n");
+            return;
+        }
+
+        await using var clientConnection = new GameClientConnection(joinHostAddress, joinPort);
+        clientConnection.MessageReceived += message => Console.Write(message);
+
+        var promptedSignal = new SemaphoreSlim(0);
+        clientConnection.PromptReceived += () => promptedSignal.Release();
+
+        var closedSignal = new TaskCompletionSource();
+        clientConnection.ConnectionClosed += _ => closedSignal.TrySetResult();
+        clientConnection.SessionAborted += reason =>
+        {
+            Console.WriteLine($"\nSession aborted: {reason}\n");
+            closedSignal.TrySetResult();
+        };
+
+        JoinResult joinResult;
+        try
+        {
+            joinResult = await clientConnection.JoinAsync(enteredJoinCode, joinDisplayName, plugin.Name, plugin.Version);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"\nCould not connect: {ex.Message}\n");
+            return;
+        }
+
+        if (!joinResult.Success)
+        {
+            Console.WriteLine($"\nCould not join: {joinResult.ErrorMessage}\n");
+            return;
+        }
+
+        Console.WriteLine("\nJoined! Waiting for the host to start the game...\n");
+
+        while (true)
+        {
+            var promptTask = promptedSignal.WaitAsync();
+            var completed = await Task.WhenAny(promptTask, closedSignal.Task);
+            if (completed == closedSignal.Task)
+            {
+                Console.WriteLine("\nDisconnected from host. Returning to the menu.\n");
+                break;
+            }
+
+            var input = Console.ReadLine() ?? string.Empty;
+            await clientConnection.SubmitInputAsync(input);
+        }
+    }
+
+    int? PromptForInt(string prompt, int min, int max)
+    {
+        Console.Write(prompt);
+        if (int.TryParse(Console.ReadLine(), out var value) && value >= min && value <= max)
+            return value;
+        return null;
     }
 }
 catch (Exception e)

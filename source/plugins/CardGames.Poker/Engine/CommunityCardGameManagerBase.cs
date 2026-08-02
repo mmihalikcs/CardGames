@@ -52,24 +52,7 @@ internal abstract class CommunityCardGameManagerBase : IGameManager
         AnnounceSessionResult();
     }
 
-    private void SetupSeats()
-    {
-        int count = GameSettings.MinOpponents;
-        while (true)
-        {
-            Io.Write($"How many AI opponents ({GameSettings.MinOpponents}-{GameSettings.MaxOpponents})? ");
-            if (int.TryParse(Io.ReadLine(), out var parsed) && parsed >= GameSettings.MinOpponents && parsed <= GameSettings.MaxOpponents)
-            {
-                count = parsed;
-                break;
-            }
-            Io.WriteLine("Invalid entry. Try again.");
-        }
-
-        _Seats.Add(new Seat("You", isHuman: true, GameSettings.StartingChips));
-        for (int i = 1; i <= count; i++)
-            _Seats.Add(new Seat($"AI {i}", isHuman: false, GameSettings.StartingChips));
-    }
+    private void SetupSeats() => SeatSetup.BuildSeats(Io, _Seats);
 
     private void PlayHand(int handNumber)
     {
@@ -94,7 +77,7 @@ internal abstract class CommunityCardGameManagerBase : IGameManager
                 seat.HoleCards.Add(deck.Draw());
 
         TableRenderer.ShowStacks(Io, _Seats);
-        TableRenderer.ShowHoleCards(Io, _Seats.First(s => s.IsHuman));
+        ShowHoleCardsToEachHuman();
 
         var community = new List<Card>();
         var ai = new AiDecisionMaker(_Random);
@@ -115,6 +98,15 @@ internal abstract class CommunityCardGameManagerBase : IGameManager
 
         var contenders = _Seats.Where(s => s.IsInHand).ToList();
         ShowdownResolver.Resolve(contenders, seat => EvaluateShowdown(seat, community), pot, Io);
+    }
+
+    private void ShowHoleCardsToEachHuman()
+    {
+        foreach (var seat in _Seats.Where(s => s.IsHuman))
+        {
+            using var scope = (Io as ISeatContextGameIO)?.BeginParticipantScope(seat.Name);
+            TableRenderer.ShowHoleCards(Io, seat);
+        }
     }
 
     private void PostAntes(Pot pot)

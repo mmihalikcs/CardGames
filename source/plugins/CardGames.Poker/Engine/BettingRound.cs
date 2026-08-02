@@ -137,6 +137,7 @@ internal sealed class BettingRound
 
     private PokerAction PromptHuman(Seat seat, int toCall, bool canRaise)
     {
+        using var scope = (_Io as ISeatContextGameIO)?.BeginParticipantScope(seat.Name);
         while (true)
         {
             _Io.WriteLine();

@@ -50,24 +50,7 @@ internal sealed class FiveCardDrawGameManager : IGameManager
         AnnounceSessionResult();
     }
 
-    private void SetupSeats()
-    {
-        int count = GameSettings.MinOpponents;
-        while (true)
-        {
-            _Io.Write($"How many AI opponents ({GameSettings.MinOpponents}-{GameSettings.MaxOpponents})? ");
-            if (int.TryParse(_Io.ReadLine(), out var parsed) && parsed >= GameSettings.MinOpponents && parsed <= GameSettings.MaxOpponents)
-            {
-                count = parsed;
-                break;
-            }
-            _Io.WriteLine("Invalid entry. Try again.");
-        }
-
-        _Seats.Add(new Seat("You", isHuman: true, GameSettings.StartingChips));
-        for (int i = 1; i <= count; i++)
-            _Seats.Add(new Seat($"AI {i}", isHuman: false, GameSettings.StartingChips));
-    }
+    private void SetupSeats() => SeatSetup.BuildSeats(_Io, _Seats);
 
     private void PlayHand(int handNumber)
     {
@@ -92,19 +75,28 @@ internal sealed class FiveCardDrawGameManager : IGameManager
                 seat.HoleCards.Add(deck.Draw());
 
         TableRenderer.ShowStacks(_Io, _Seats);
-        TableRenderer.ShowHoleCards(_Io, _Seats.First(s => s.IsHuman));
+        ShowHoleCardsToEachHuman();
 
         var ai = new AiDecisionMaker(_Random);
 
         if (!RunStreet(pot, ai)) { AwardUncontested(pot); return; }
 
         RunDrawPhase(deck);
-        TableRenderer.ShowHoleCards(_Io, _Seats.First(s => s.IsHuman));
+        ShowHoleCardsToEachHuman();
 
         if (!RunStreet(pot, ai)) { AwardUncontested(pot); return; }
 
         var contenders = _Seats.Where(s => s.IsInHand).ToList();
         ShowdownResolver.Resolve(contenders, seat => HandEvaluator.EvaluateExact5(seat.HoleCards), pot, _Io);
+    }
+
+    private void ShowHoleCardsToEachHuman()
+    {
+        foreach (var seat in _Seats.Where(s => s.IsHuman))
+        {
+            using var scope = (_Io as ISeatContextGameIO)?.BeginParticipantScope(seat.Name);
+            TableRenderer.ShowHoleCards(_Io, seat);
+        }
     }
 
     private void PostAntes(Pot pot)
@@ -151,6 +143,7 @@ internal sealed class FiveCardDrawGameManager : IGameManager
 
     private List<int> PromptHumanDiscards(Seat seat)
     {
+        using var scope = (_Io as ISeatContextGameIO)?.BeginParticipantScope(seat.Name);
         _Io.WriteLine();
         TableRenderer.ShowHoleCards(_Io, seat);
         _Io.Write("Enter positions to discard (1-5, space separated, blank to keep all): ");

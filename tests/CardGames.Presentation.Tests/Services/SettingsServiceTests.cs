@@ -1,10 +1,10 @@
 using CardGames.Domain.Interfaces;
 using CardGames.Domain.Models;
-using CardGames.Infrastructure.Services;
+using CardGames.Presentation.Services;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
-namespace CardGames.Infrastructure.Tests.Services;
+namespace CardGames.Presentation.Tests.Services;
 
 public sealed class SettingsServiceTests : IDisposable
 {
@@ -23,6 +23,17 @@ public sealed class SettingsServiceTests : IDisposable
         var settings = _SettingsService.Load();
 
         Assert.Equal(string.Empty, settings.PluginDirectory);
+        Assert.False(settings.MultiplayerEnabled);
+    }
+
+    [Fact]
+    public void Save_ThenLoad_RoundTripsMultiplayerEnabled()
+    {
+        _SettingsService.Save(new ApplicationSettings { MultiplayerEnabled = true });
+
+        var reloaded = _SettingsService.Load();
+
+        Assert.True(reloaded.MultiplayerEnabled);
     }
 
     [Fact]

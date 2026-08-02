@@ -6,9 +6,6 @@ namespace CardGames.Presentation.Services;
 
 public class ConsoleRenderer
 {
-    // Properties
-    public IReadOnlyDictionary<int, string> Commands => _BaseCommandDictionary.AsReadOnly();
-
     // Fields
     private readonly Dictionary<int, string> _BaseCommandDictionary;
     private readonly ILogger<ConsoleRenderer> _Logger;
@@ -22,12 +19,20 @@ public class ConsoleRenderer
     }
 
     /// <summary>
+    /// The current command set.
+    /// </summary>
+    public IReadOnlyDictionary<int, string> GetCommands()
+    {
+        return _BaseCommandDictionary.AsReadOnly();
+    }
+
+    /// <summary>
     /// Main Function to render the commands menu
     /// </summary>
     public void DisplayMenu()
     {
         // Run Base Query
-        var query = _BaseCommandDictionary.Where(x => x.Key != 0).OrderBy(f => f.Key).ToList();
+        var query = GetCommands().Where(x => x.Key != 0).OrderBy(f => f.Key).ToList();
         // Process the list
         foreach (var command in query)
         {

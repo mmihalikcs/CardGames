@@ -20,7 +20,7 @@ public sealed class ConsoleRendererTests
     [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
     public void Commands_HasExpectedMenuEntriesInOrder()
     {
-        var commands = _Renderer.Commands;
+        var commands = _Renderer.GetCommands();
 
         Assert.Equal(6, commands.Count);
         Assert.Equal("Play", commands[1]);
@@ -35,8 +35,8 @@ public sealed class ConsoleRendererTests
     [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
     public void Commands_SettingsPrecedesAbout()
     {
-        var settingsKey = _Renderer.Commands.First(x => x.Value == "Settings").Key;
-        var aboutKey = _Renderer.Commands.First(x => x.Value == "About").Key;
+        var settingsKey = _Renderer.GetCommands().First(x => x.Value == "Settings").Key;
+        var aboutKey = _Renderer.GetCommands().First(x => x.Value == "About").Key;
 
         Assert.True(settingsKey < aboutKey);
     }

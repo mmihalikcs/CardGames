@@ -3,7 +3,7 @@ using CardGames.Domain.Interfaces;
 using CardGames.Domain.Models;
 using Microsoft.Extensions.Logging;
 
-namespace CardGames.Infrastructure.Services;
+namespace CardGames.Presentation.Services;
 
 public class SettingsService : ISettingsService
 {
@@ -39,7 +39,7 @@ public class SettingsService : ISettingsService
         }
         catch (Exception e)
         {
-            _Logger.LogWarning($"Settings Load Exception: {e.Message}");
+            _Logger.LogWarning(e, "Settings Load Exception");
         }
         return new ApplicationSettings();
     }
@@ -60,7 +60,7 @@ public class SettingsService : ISettingsService
         }
         catch (Exception e)
         {
-            _Logger.LogError($"Settings Save Exception: {e.Message}");
+            _Logger.LogError(e, "Settings Save Exception");
         }
     }
 

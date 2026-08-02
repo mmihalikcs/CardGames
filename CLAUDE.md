@@ -24,8 +24,7 @@ Solution defined in `CardGames.slnx`. Application layers live under `source/`, a
 
 - **CardGames.Domain** — core models (`Card`, `DeckOfCards`), enums (`Suit`, `Rank`), and the public interfaces (`IPlugin`, `IGameManager`, `IGameIO`, `IAssemblyLoaderService`) that other layers and plugins depend on. No dependencies on other projects.
 - **CardGames.Application** — application services, notably `AssemblyLoaderService`, which implements `IAssemblyLoaderService`. Depends on Domain only.
-- **CardGames.Infrastructure** — infrastructure concerns. Depends on Domain only (currently empty of app-level services).
-- **CardGames.Presentation** — the console entry point (`Program.cs`). Wires up a generic `IHost` with DI (`Microsoft.Extensions.Hosting`/`DependencyInjection`), loads plugins, and drives a console menu loop via `ConsoleRenderer`.
+- **CardGames.Presentation** — the console entry point (`Program.cs`). Wires up a generic `IHost` with DI (`Microsoft.Extensions.Hosting`/`DependencyInjection`), loads plugins, and drives a console menu loop via `ConsoleRenderer`. Also owns `SettingsService` (`ISettingsService`'s only implementation — reads/writes `ApplicationSettings` as JSON under the user's app-data folder).
 - **source/plugins/** — individual games (`CardGames.WAR`, `CardGames.GoFish`) built as separate class libraries, each implementing `IPlugin` and depending only on `CardGames.Domain`.
 
 ### Plugin loading model

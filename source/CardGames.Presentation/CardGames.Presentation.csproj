@@ -7,7 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\CardGames.Application\CardGames.Application.csproj" />
-    <ProjectReference Include="..\CardGames.Infrastructure\CardGames.Infrastructure.csproj" />
+    <ProjectReference Include="..\CardGames.Networking\CardGames.Networking.csproj" />
     <!-- Not compiled against: plugins are discovered and loaded at runtime via IAssemblyLoaderService,
          not referenced directly, so they can be unloaded from a collectible AssemblyLoadContext. -->
     <ProjectReference Include="..\plugins\CardGames.WAR\CardGames.WAR.csproj" ReferenceOutputAssembly="false" />
@@ -15,8 +15,11 @@
     <ProjectReference Include="..\plugins\CardGames.Poker\CardGames.Poker.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="CardGames.Presentation.Tests" />
   </ItemGroup>
 
   <!-- Copies plugin build output next to the host executable so IAssemblyLoaderService can discover it at runtime. -->

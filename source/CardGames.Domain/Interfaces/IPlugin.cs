@@ -25,4 +25,11 @@ public interface IPlugin
     /// so existing plugins with no variants need zero source changes.
     /// </summary>
     IGameManager CreateGameManager(IGameIO io, GameVariant variant) => CreateGameManager(io);
+
+    /// <summary>
+    /// Whether this plugin can be played over the network (multiple human seats routed to
+    /// distinct remote connections via ISeatContextGameIO) rather than only local hot-seat.
+    /// Defaults to false so existing plugins need zero source changes.
+    /// </summary>
+    bool SupportsMultiplayer => false;
 }

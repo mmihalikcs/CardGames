@@ -13,6 +13,8 @@ public sealed class PokerPlugin : IPlugin
 
     public IReadOnlyList<GameVariant> Variants => PokerVariants.All;
 
+    public bool SupportsMultiplayer => true;
+
     public IGameManager CreateGameManager(IGameIO io) => CreateGameManager(io, PokerVariants.TexasHoldem);
 
     public IGameManager CreateGameManager(IGameIO io, GameVariant variant) => variant.Key switch
