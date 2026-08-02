@@ -1,0 +1,15 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run CardGames (external terminal)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            "program": "${workspaceFolder}/source/CardGames.Presentation/bin/Debug/net10.0/CardGames.Presentation.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/source/CardGames.Presentation",
+            "console": "externalTerminal"
+        }
+    ]
+}

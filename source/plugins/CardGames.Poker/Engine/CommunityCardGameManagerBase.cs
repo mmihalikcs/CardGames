@@ -86,14 +86,17 @@ internal abstract class CommunityCardGameManagerBase : IGameManager
 
         DealCommunity(deck, community, 3); // flop
         TableRenderer.ShowCommunityCards(Io, community);
+        ShowHoleCardsToEachHuman();
         if (!RunStreet(pot, ai, community)) { AwardUncontested(pot); return; }
 
         DealCommunity(deck, community, 1); // turn
         TableRenderer.ShowCommunityCards(Io, community);
+        ShowHoleCardsToEachHuman();
         if (!RunStreet(pot, ai, community)) { AwardUncontested(pot); return; }
 
         DealCommunity(deck, community, 1); // river
         TableRenderer.ShowCommunityCards(Io, community);
+        ShowHoleCardsToEachHuman();
         if (!RunStreet(pot, ai, community)) { AwardUncontested(pot); return; }
 
         var contenders = _Seats.Where(s => s.IsInHand).ToList();

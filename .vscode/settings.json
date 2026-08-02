@@ -1,5 +1,6 @@
 {
     "csharp-dev-tools.solutionViewer.selectedWorkspaceSolutions": [
         "CardGames.slnx"
-    ]
+    ],
+    "terminal.external.linuxExec": "gnome-terminal"
 }
