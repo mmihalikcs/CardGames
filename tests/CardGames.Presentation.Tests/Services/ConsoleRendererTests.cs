@@ -66,4 +66,53 @@ public sealed class ConsoleRendererTests
             Console.SetOut(originalOut);
         }
     }
+
+    [Fact]
+    [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
+    public void DisplaySubmenu_WritesTitleOptionsAndCancelPrompt()
+    {
+        var originalOut = Console.Out;
+        try
+        {
+            using var writer = new StringWriter();
+            Console.SetOut(writer);
+
+            _Renderer.DisplaySubmenu("Select a Poker variant", new[] { "Texas Hold'em", "Omaha", "Five-Card Draw" });
+
+            var output = writer.ToString();
+            Assert.Contains("Select a Poker variant:", output);
+            Assert.Contains("1) Texas Hold'em", output);
+            Assert.Contains("2) Omaha", output);
+            Assert.Contains("3) Five-Card Draw", output);
+            Assert.Contains("0) Cancel", output);
+            Assert.Contains("Enter a selection: ", output);
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+    }
+
+    [Fact]
+    [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
+    public void DisplaySubmenu_EmptyOptions_WritesOnlyCancelPrompt()
+    {
+        var originalOut = Console.Out;
+        try
+        {
+            using var writer = new StringWriter();
+            Console.SetOut(writer);
+
+            _Renderer.DisplaySubmenu("Select a variant", Array.Empty<string>());
+
+            var output = writer.ToString();
+            Assert.DoesNotContain("1)", output);
+            Assert.Contains("0) Cancel", output);
+            Assert.Contains("Enter a selection: ", output);
+        }
+        finally
+        {
+            Console.SetOut(originalOut);
+        }
+    }
 }

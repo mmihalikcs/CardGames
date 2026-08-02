@@ -39,6 +39,22 @@ public class ConsoleRenderer
         Console.Write("Enter a selection: ");
     }
 
+    /// <summary>
+    /// Renders a generic numbered submenu (e.g. a plugin's selectable game variants) with a
+    /// "0) Cancel" option. Write-only, like DisplayMenu() - callers own reading the selection.
+    /// </summary>
+    public void DisplaySubmenu(string title, IReadOnlyList<string> options)
+    {
+        Console.WriteLine();
+        Console.WriteLine($"{title}:");
+        for (int i = 0; i < options.Count; i++)
+        {
+            Console.WriteLine($"{i + 1}) {options[i]}");
+        }
+        Console.WriteLine("0) Cancel");
+        Console.Write("Enter a selection: ");
+    }
+
     // Private Members
     private Dictionary<int, string> LoadCommandDictionary()
     {

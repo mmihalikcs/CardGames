@@ -12,6 +12,7 @@
   </Folder>
   <Folder Name="/source/plugins/">
     <Project Path="source/plugins/CardGames.GoFish/CardGames.GoFish.csproj" />
+    <Project Path="source/plugins/CardGames.Poker/CardGames.Poker.csproj" />
     <Project Path="source/plugins/CardGames.WAR/CardGames.WAR.csproj" />
   </Folder>
   <Folder Name="/tests/">
@@ -20,6 +21,7 @@
     <Project Path="tests/CardGames.Domain.Tests/CardGames.Domain.Tests.csproj" />
     <Project Path="tests/CardGames.GoFish.Tests/CardGames.GoFish.Tests.csproj" />
     <Project Path="tests/CardGames.Infrastructure.Tests/CardGames.Infrastructure.Tests.csproj" />
+    <Project Path="tests/CardGames.Poker.Tests/CardGames.Poker.Tests.csproj" />
     <Project Path="tests/CardGames.Presentation.Tests/CardGames.Presentation.Tests.csproj" />
     <Project Path="tests/CardGames.WAR.Tests/CardGames.WAR.Tests.csproj" />
   </Folder>

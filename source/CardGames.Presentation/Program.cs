@@ -1,5 +1,6 @@
 using CardGames.Application.Services;
 using CardGames.Domain.Interfaces;
+using CardGames.Domain.Models;
 using CardGames.Infrastructure.Services;
 using CardGames.Presentation.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -59,8 +60,36 @@ try
                     Console.WriteLine("\nNo game is loaded. Use 'Load Game' to choose one first.\n");
                     break;
                 }
-                Console.WriteLine($"\nStarting '{loadedPlugin.Name}'...\n");
-                var gameManager = loadedPlugin.CreateGameManager(gameIo);
+
+                var variants = loadedPlugin.Variants;
+                IGameManager gameManager;
+                if (variants.Count == 0)
+                {
+                    Console.WriteLine($"\nStarting '{loadedPlugin.Name}'...\n");
+                    gameManager = loadedPlugin.CreateGameManager(gameIo);
+                }
+                else
+                {
+                    consoleRenderer.DisplaySubmenu(
+                        $"Select a {loadedPlugin.Name} variant",
+                        variants.Select(v => $"{v.Name} - {v.Description}").ToList());
+
+                    if (!int.TryParse(Console.ReadLine(), out int variantChoice) || variantChoice < 0 || variantChoice > variants.Count)
+                    {
+                        Console.WriteLine("\nInvalid selection.\n");
+                        break;
+                    }
+                    if (variantChoice == 0)
+                    {
+                        Console.WriteLine("\nCancelled.\n");
+                        break;
+                    }
+
+                    var selectedVariant = variants[variantChoice - 1];
+                    Console.WriteLine($"\nStarting '{loadedPlugin.Name}' ({selectedVariant.Name})...\n");
+                    gameManager = loadedPlugin.CreateGameManager(gameIo, selectedVariant);
+                }
+
                 gameManager.StartGame();
                 break;
             case 2: // Load Game
