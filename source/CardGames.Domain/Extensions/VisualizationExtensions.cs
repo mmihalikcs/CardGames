@@ -1,9 +1,9 @@
-﻿using CardGames.Domain.Models;
+using CardGames.Domain.Models;
 using System.ComponentModel;
 using System.Reflection;
 using System.Text;
 
-namespace CardGames.Presentation.Extensions;
+namespace CardGames.Domain.Extensions;
 
 public static class VisualizationExtensions
 {
@@ -21,7 +21,7 @@ public static class VisualizationExtensions
         }
     }
 
-    extension(Card card) 
+    extension(Card card)
     {
         public string DisplayCard()
         {

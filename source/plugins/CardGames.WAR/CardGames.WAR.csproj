@@ -11,4 +11,8 @@
     <ProjectReference Include="..\..\CardGames.Domain\CardGames.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="CardGames.WAR.Tests" />
+  </ItemGroup>
+
 </Project>

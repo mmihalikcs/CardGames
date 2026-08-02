@@ -20,9 +20,9 @@ Target framework is `net10.0` across all projects, with `Nullable` and `Implicit
 
 ## Architecture
 
-Layered solution under `source/`:
+Solution defined in `CardGames.slnx`. Application layers live under `source/`, all test projects live under the sibling top-level `tests/`:
 
-- **CardGames.Domain** — core models (`Card`, `DeckOfCards`), enums (`Suit`, `Rank`), and the public interfaces (`IPlugin`, `IGameManger`, `IAssemblyLoaderService`) that other layers and plugins depend on. No dependencies on other projects.
+- **CardGames.Domain** — core models (`Card`, `DeckOfCards`), enums (`Suit`, `Rank`), and the public interfaces (`IPlugin`, `IGameManager`, `IGameIO`, `IAssemblyLoaderService`) that other layers and plugins depend on. No dependencies on other projects.
 - **CardGames.Application** — application services, notably `AssemblyLoaderService`, which implements `IAssemblyLoaderService`. Depends on Domain only.
 - **CardGames.Infrastructure** — infrastructure concerns. Depends on Domain only (currently empty of app-level services).
 - **CardGames.Presentation** — the console entry point (`Program.cs`). Wires up a generic `IHost` with DI (`Microsoft.Extensions.Hosting`/`DependencyInjection`), loads plugins, and drives a console menu loop via `ConsoleRenderer`.
@@ -34,7 +34,7 @@ Each game plugin project sets `<AssemblyName>$(MSBuildProjectName).plugin</Assem
 
 ### Tests
 
-`source/tests/` mirrors the layers being tested (`CardGames.Domain.Tests`, `CardGames.Application.Tests`) plus `CardGames.Common.Tests`, a shared library (not a test project itself) holding cross-cutting test constants like `TestCaseConstants`. Tests use xUnit.
+`tests/` mirrors the layers being tested (`CardGames.Domain.Tests`, `CardGames.Application.Tests`, `CardGames.WAR.Tests`, `CardGames.GoFish.Tests`, ...) plus `CardGames.Common.Tests`, a shared library (not a test project itself) holding cross-cutting test constants like `TestCaseConstants`. Tests use xUnit.
 
 ## Claude Code rules
 

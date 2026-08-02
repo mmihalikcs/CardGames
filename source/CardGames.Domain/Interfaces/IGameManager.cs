@@ -1,6 +1,6 @@
 namespace CardGames.Domain.Interfaces;
 
-public interface IGameManger
+public interface IGameManager
 {
     void StartGame();
 }

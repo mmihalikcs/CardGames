@@ -69,6 +69,19 @@ public sealed class DeckOfCards
     }
 
     /// <summary>
+    /// Removes and returns the top card of the deck. Returns null if the deck is empty.
+    /// </summary>
+    public Card? DrawCard()
+    {
+        if (Cards.Count == 0)
+            return null;
+
+        var card = Cards[0];
+        Cards.RemoveAt(0);
+        return card;
+    }
+
+    /// <summary>
     /// Shuffle the deck randomly
     /// </summary>
     public void ShuffleDeck()

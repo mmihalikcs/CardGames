@@ -16,6 +16,7 @@ using IHost host = Host.CreateDefaultBuilder(args)
         // DI
         services.AddSingleton<IAssemblyLoaderService, AssemblyLoaderService>();
         services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddSingleton<IGameIO, ConsoleGameIO>();
         services.AddSingleton<ConsoleRenderer>();
     })
     .Build();
@@ -33,9 +34,11 @@ try
     var logger = host.Services.GetRequiredService<ILogger<Program>>();
     var assemblyLoaderService = host.Services.GetRequiredService<IAssemblyLoaderService>();
     var settingsService = host.Services.GetRequiredService<ISettingsService>();
+    var gameIo = host.Services.GetRequiredService<IGameIO>();
     var consoleRenderer = host.Services.GetRequiredService<ConsoleRenderer>();
 
     // Main Loop
+    IPlugin? loadedPlugin = null;
     int selection = -1;
     while (selection != 0)
     {
@@ -51,7 +54,14 @@ try
         switch (selection)
         {
             case 1: // Play
-                Console.WriteLine("\nPlay is not implemented yet.\n");
+                if (loadedPlugin == null)
+                {
+                    Console.WriteLine("\nNo game is loaded. Use 'Load Game' to choose one first.\n");
+                    break;
+                }
+                Console.WriteLine($"\nStarting '{loadedPlugin.Name}'...\n");
+                var gameManager = loadedPlugin.CreateGameManager(gameIo);
+                gameManager.StartGame();
                 break;
             case 2: // Load Game
                 var loadedSettings = settingsService.Load();
@@ -70,11 +80,24 @@ try
                     break;
                 }
                 Console.WriteLine();
-                foreach (var plugin in discoveredPlugins)
+                for (int i = 0; i < discoveredPlugins.Count; i++)
                 {
-                    Console.WriteLine($"{plugin.Name} (v{plugin.Version}) - {plugin.Description}");
+                    var plugin = discoveredPlugins[i];
+                    Console.WriteLine($"{i + 1}) {plugin.Name} (v{plugin.Version}) - {plugin.Description}");
                 }
-                Console.WriteLine();
+                Console.Write("\nSelect a game to load (0 to cancel): ");
+                if (!int.TryParse(Console.ReadLine(), out int gameChoice) || gameChoice < 0 || gameChoice > discoveredPlugins.Count)
+                {
+                    Console.WriteLine("\nInvalid selection. No game loaded.\n");
+                    break;
+                }
+                if (gameChoice == 0)
+                {
+                    Console.WriteLine("\nCancelled.\n");
+                    break;
+                }
+                loadedPlugin = discoveredPlugins[gameChoice - 1];
+                Console.WriteLine($"\n'{loadedPlugin.Name}' loaded. Select 'Play' to begin.\n");
                 break;
             case 3: // Unload Game
                 var loadedPluginNames = assemblyLoaderService.GetLoadedPluginNames();

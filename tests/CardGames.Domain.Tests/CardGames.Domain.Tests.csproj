@@ -14,10 +14,10 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\CardGames.Application\CardGames.Application.csproj" />
+    <ProjectReference Include="..\..\source\CardGames.Domain\CardGames.Domain.csproj" />
     <ProjectReference Include="..\CardGames.Common.Tests\CardGames.Common.Tests.csproj" />
-    <!-- Test-only: gives the test output a real *.plugin.dll to exercise the loader against. -->
-    <ProjectReference Include="..\..\plugins\CardGames.WAR\CardGames.WAR.csproj" />
-    <ProjectReference Include="..\..\plugins\CardGames.GoFish\CardGames.GoFish.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Fixtures\" />
   </ItemGroup>
 </Project>

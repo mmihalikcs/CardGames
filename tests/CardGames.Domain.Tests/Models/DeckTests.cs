@@ -151,4 +151,47 @@ public sealed class DeckTests
         Assert.False(deckOfCards.RemoveCard(cardNotInDeck));
         Assert.True(deckOfCards.CurrentDeck.Count() == 52);
     }
+
+    [Fact]
+    [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
+    public void Negative_DrawCard_EmptyDeck_ReturnsNull()
+    {
+        var deckOfCards = new DeckOfCards();
+        Assert.Null(deckOfCards.DrawCard());
+    }
+
+    [Fact]
+    [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
+    public void Postive_DrawCard_RemovesAndReturnsFirstCard()
+    {
+        var deckOfCards = new DeckOfCards();
+        deckOfCards.InitializeStandardDeck();
+        var expectedCard = deckOfCards.CurrentDeck[0];
+
+        var drawnCard = deckOfCards.DrawCard();
+
+        Assert.Same(expectedCard, drawnCard);
+        Assert.True(deckOfCards.CurrentDeck.Count() == 51);
+        Assert.DoesNotContain(expectedCard, deckOfCards.CurrentDeck);
+    }
+
+    [Fact]
+    [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
+    public void Postive_DrawCard_CalledRepeatedly_DrainsDeckInOrder()
+    {
+        var deckOfCards = new DeckOfCards();
+        deckOfCards.InitializeStandardDeck();
+        var expectedOrder = new List<Card>(deckOfCards.CurrentDeck);
+
+        var drawnCards = new List<Card>();
+        Card? card;
+        while ((card = deckOfCards.DrawCard()) != null)
+        {
+            drawnCards.Add(card);
+        }
+
+        Assert.Equal(expectedOrder, drawnCards);
+        Assert.True(deckOfCards.CurrentDeck.Count() == 0);
+        Assert.Null(deckOfCards.DrawCard());
+    }
 }

@@ -7,4 +7,6 @@ public interface IPlugin
     string Description { get; }
 
     string Version { get; }
+
+    IGameManager CreateGameManager(IGameIO io);
 }

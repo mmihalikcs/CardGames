@@ -1,10 +1,10 @@
 using CardGames.Common.Tests;
 using CardGames.Domain.Enums;
+using CardGames.Domain.Extensions;
 using CardGames.Domain.Models;
-using CardGames.Presentation.Extensions;
 using Xunit;
 
-namespace CardGames.Presentation.Tests.Extensions;
+namespace CardGames.Domain.Tests.Extensions;
 
 public sealed class VisualizationExtensionsTests
 {
