@@ -1,7 +1,5 @@
-using CardGames.Domain.Extensions;
 using CardGames.Domain.Interaction;
 using CardGames.Domain.Models;
-using System.Text;
 
 namespace CardGames.WAR;
 
@@ -22,20 +20,11 @@ internal sealed record CardsRevealed(Card PlayerCard, Card ComputerCard, string 
     public override string Describe()
     {
         var prefix = Reason == "War" ? "War cards: " : string.Empty;
-        return $"{prefix}You played {PlayerCard}. Computer played {ComputerCard}.{Environment.NewLine}{RenderVersus(PlayerCard, ComputerCard)}";
+        return $"{prefix}You played {PlayerCard}. Computer played {ComputerCard}.";
     }
 
-    private static string RenderVersus(Card left, Card right)
-    {
-        var leftLines = left.DisplayCard().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-        var rightLines = right.DisplayCard().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-
-        var sb = new StringBuilder();
-        sb.AppendLine($"{"You".PadRight(leftLines[0].Length)}   Computer");
-        for (int i = 0; i < leftLines.Length; i++)
-            sb.AppendLine($"{leftLines[i]}   {rightLines[i]}");
-        return sb.ToString();
-    }
+    public override IReadOnlyList<CardGroup> CardGroups =>
+        [new CardGroup("You", [PlayerCard]), new CardGroup("Computer", [ComputerCard])];
 }
 
 internal sealed record WarTriggered(bool Repeat = false) : GameEvent

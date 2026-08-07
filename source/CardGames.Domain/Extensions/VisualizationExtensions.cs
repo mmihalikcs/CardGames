@@ -1,3 +1,4 @@
+using CardGames.Domain.Enums;
 using CardGames.Domain.Models;
 using System.ComponentModel;
 using System.Reflection;
@@ -19,6 +20,20 @@ public static class VisualizationExtensions
             }
             return enumeration.ToString();
         }
+    }
+
+    extension(Suit suit)
+    {
+        public string GetSuitGlyph() => suit switch
+        {
+            Suit.Hearts => "♥",
+            Suit.Diamonds => "♦",
+            Suit.Clubs => "♣",
+            Suit.Spades => "♠",
+            _ => "?"
+        };
+
+        public bool IsRedSuit() => suit is Suit.Hearts or Suit.Diamonds;
     }
 
     extension(Card card)

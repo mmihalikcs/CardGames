@@ -33,7 +33,26 @@ public class AssemblyLoaderService : IAssemblyLoaderService
         {
             var trustedPlatformAssemblies = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!)
                 .Split(Path.PathSeparator);
-            var resolver = new PathAssemblyResolver(trustedPlatformAssemblies.Append(assemblyPath));
+
+            // TRUSTED_PLATFORM_ASSEMBLIES alone is enough to resolve a plugin's dependencies (e.g.
+            // CardGames.Domain) under a normal dotnet-hosted apphost, since it lists every dependency
+            // of the running app. Hosts with their own runtime bootstrap - e.g. Godot's Mono build -
+            // populate it with only their own platform assemblies, so every DLL sitting next to the
+            // plugin (where the build/copy step already places its dependencies) is trusted too, kept
+            // distinct by simple name so PathAssemblyResolver never sees two paths for the same name.
+            var knownNames = new HashSet<string>(
+                trustedPlatformAssemblies.Select(Path.GetFileName)!,
+                StringComparer.OrdinalIgnoreCase)
+            {
+                Path.GetFileName(assemblyPath)!
+            };
+
+            var assemblyDirectory = Path.GetDirectoryName(assemblyPath);
+            var neighboringAssemblies = string.IsNullOrEmpty(assemblyDirectory) || !Directory.Exists(assemblyDirectory)
+                ? Enumerable.Empty<string>()
+                : Directory.GetFiles(assemblyDirectory, "*.dll").Where(path => knownNames.Add(Path.GetFileName(path)!));
+
+            var resolver = new PathAssemblyResolver(trustedPlatformAssemblies.Concat(neighboringAssemblies).Append(assemblyPath));
             using var loadContext = new MetadataLoadContext(resolver);
 
             var assembly = loadContext.LoadFromAssemblyPath(assemblyPath);
@@ -105,6 +124,16 @@ public class AssemblyLoaderService : IAssemblyLoaderService
         try
         {
             AssemblyLoadContext context = new AssemblyLoadContext(Path.GetFileNameWithoutExtension(assemblyPath), true);
+
+            // Under a normal dotnet-hosted apphost, a plugin's dependencies (e.g. CardGames.Domain)
+            // resolve automatically because they're part of the host's own TRUSTED_PLATFORM_ASSEMBLIES
+            // and CoreCLR's default binder satisfies any ALC's load request from that process-wide
+            // list first. Hosts with their own runtime bootstrap (e.g. Godot's Mono build) don't put
+            // the app's own dependencies there, so this ALC needs its own fallback: look for a
+            // same-named DLL next to the plugin itself, where the build/copy step already places it.
+            var assemblyDirectory = Path.GetDirectoryName(assemblyPath);
+            context.Resolving += (loadContext, name) => ResolveNeighboringAssembly(loadContext, name, assemblyDirectory);
+
             context.LoadFromAssemblyPath(assemblyPath);
             _AssemblyLoadContexts.Add(context);
             return true;
@@ -114,6 +143,26 @@ public class AssemblyLoaderService : IAssemblyLoaderService
             _Logger.LogError($"Assembly Load Exception: {e.Message}");
         }
         return false;
+    }
+
+    private static Assembly? ResolveNeighboringAssembly(AssemblyLoadContext context, AssemblyName assemblyName, string? assemblyDirectory)
+    {
+        // Prefer an assembly already loaded anywhere in the process (e.g. CardGames.Domain, loaded
+        // into the Default context as the host's own dependency) over loading a second copy into
+        // this plugin's context. Two separately-loaded copies of the same DLL produce two distinct,
+        // incompatible CLR types even with identical bytes, so a plugin's IPlugin implementation
+        // would silently fail typeof(IPlugin).IsAssignableFrom(...) against the host's IPlugin type
+        // if it bound to its own private copy instead of the host's.
+        var alreadyLoaded = AppDomain.CurrentDomain.GetAssemblies()
+            .FirstOrDefault(a => string.Equals(a.GetName().Name, assemblyName.Name, StringComparison.OrdinalIgnoreCase));
+        if (alreadyLoaded is not null)
+            return alreadyLoaded;
+
+        if (string.IsNullOrEmpty(assemblyDirectory) || assemblyName.Name is null)
+            return null;
+
+        var candidatePath = Path.Combine(assemblyDirectory, assemblyName.Name + ".dll");
+        return File.Exists(candidatePath) ? context.LoadFromAssemblyPath(candidatePath) : null;
     }
 
     /// <summary>

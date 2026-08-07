@@ -10,6 +10,7 @@ plugins that are discovered and loaded at runtime from `*.plugin.dll` files.
 - [Layers](#layers)
 - [Plugin loading model](#plugin-loading-model)
 - [Console application flow](#console-application-flow)
+- [Godot client](#godot-client)
 - [Games](#games)
   - [WAR](#war)
   - [Go Fish](#go-fish)
@@ -28,6 +29,7 @@ source/
   CardGames.Domain/          # models, enums, public interfaces - no dependencies
   CardGames.Application/     # AssemblyLoaderService, SettingsService - depends on Domain only
   CardGames.Console/         # console entry point, DI wiring, menu loop
+  CardGames.Godot/           # embedded single-player Godot client - depends on Application + plugins (see below)
   plugins/
     CardGames.WAR/           # WAR plugin - depends on Domain only
     CardGames.GoFish/        # Go Fish plugin - depends on Domain only
@@ -76,6 +78,12 @@ playing, and unloading game plugins. `ConsoleGameIO` implements `IGameIO` on
 top of `Console.Write`/`Console.ReadLine`; `Program.cs` wraps it in a
 `TextGameChannel` before handing it to a plugin (see "Presentation contract").
 
+**CardGames.Godot** is a second, embedded presentation layer - a Godot 4
+(C#/Mono) project offering the same games through a real UI instead of a
+console. It reuses `IAssemblyLoaderService`/`ISettingsService` directly
+(no `Microsoft.Extensions.Hosting`) and implements `IGameChannel` itself
+rather than going through `TextGameChannel` (see "Godot client" below).
+
 ## Presentation contract
 
 Plugins never see `IGameIO` directly - it's a raw text-transport primitive
@@ -109,6 +117,19 @@ text transports - `TextGameChannel` is constructed once, wrapping whichever
 `IGameIO` is in play, right before a plugin's `CreateGameManager` is called
 (see `Program.cs`'s Play case and `GameSessionManager.StartSessionAsync`).
 
+`GameEvent` also has a `CardGroups` property (`IReadOnlyList<CardGroup>`,
+empty by default) - a labeled set of cards significant to that event, e.g.
+WAR's `CardsRevealed` exposes `[CardGroup("You", [...]), CardGroup("Computer", [...])]`.
+Unlike `GameEvent`'s own leaf types, `CardGroup` is defined once in Domain and
+shared by every plugin, so - like `GamePrompt`'s three kinds - a channel can
+render it without any per-plugin knowledge. `TextGameChannel.Publish` renders
+`CardGroups` as ASCII art (`Card.DisplayCard()`, one labeled row per group)
+appended after `Describe()`; this is what previously lived duplicated across
+WAR's `RenderVersus`, Poker's `TableRenderer.RenderCardRow`, and GoFish's
+`RenderHandRow` - each plugin's `Describe()` is now narrative text only. A
+structured client (Godot) instead draws real card graphics from the same
+`CardGroups` data (see "Godot client" below).
+
 ## Plugin loading model
 
 Each plugin project sets:
@@ -138,6 +159,21 @@ to free the assembly without restarting the process. This isolation is
 intentional: new plugin functionality should go through this same
 discover/load/unload lifecycle rather than a direct project reference from
 Console to a plugin project.
+
+Both verify and load fall back to resolving a plugin's dependencies (e.g.
+`CardGames.Domain`) from DLLs sitting next to the plugin itself, rather than
+relying solely on `TRUSTED_PLATFORM_ASSEMBLIES`. Under a normal
+`dotnet`-hosted apphost (Console), that environment variable already lists
+every dependency of the running app, so this fallback is inert. Hosts with
+their own runtime bootstrap - notably Godot's Mono build - populate it with
+only their own platform assemblies, so without this fallback a plugin's
+dependencies fail to resolve. The real-load fallback (a `Resolving` handler
+on the plugin's `AssemblyLoadContext`) specifically prefers an
+already-loaded assembly by simple name over loading a second copy: two
+separately-loaded copies of the same DLL are distinct, incompatible CLR
+types even with identical bytes, which would make a plugin's `IPlugin`
+implementation fail `typeof(IPlugin).IsAssignableFrom(...)` against the
+host's own `IPlugin` type.
 
 `IPlugin` itself is small and declarative:
 
@@ -179,6 +215,65 @@ five options. The "Play" case wraps the resolved `IGameIO` in a
 Only one plugin is "loaded" for play at a time in the current UI, though
 multiple plugin assemblies can be loaded into memory simultaneously (see
 Unload Game).
+
+## Godot client
+
+`source/CardGames.Godot/` is an embedded, single-player Godot 4 (C#/Mono)
+client - a second presentation layer alongside Console, built against the
+same `IAssemblyLoaderService`/`ISettingsService`/`IGameChannel` contracts.
+Its `CardGames.Godot.csproj` targets `net10.0` via `Godot.NET.Sdk`,
+references `CardGames.Application` and each plugin project with
+`ReferenceOutputAssembly="false"` (plugins stay runtime-discovered, never
+compiled against, exactly like Console), and copies each plugin's
+`*.plugin.dll` into Godot's build output with an `AfterTargets="Build"`
+MSBuild target mirroring Console's `CopyPluginAssemblies`.
+
+`MainController` (`Scripts/MainController.cs`) is the composition root: its
+`_Ready()` instantiates `AssemblyLoaderService`/`SettingsService` directly
+(no `Microsoft.Extensions.Hosting` - there's a single consumer) and calls
+`DiscoverPlugins` the same way Console's Load Game menu does, populating a
+`PluginSelectPanel` list (with a variant sub-list for Poker). Choosing a
+game switches to `GameSessionPanel` and starts a `GodotGameChannel`.
+
+Unlike Console/Networking, which wrap `IGameIO` in `TextGameChannel`,
+`GodotGameChannel` (`Scripts/GodotGameChannel.cs`) implements
+`ISeatContextGameChannel` directly - the doc comment on
+`IGamePromptChannel.Await` anticipated exactly this ("a Godot UI event").
+Since `GamePrompt`'s three kinds (`ConfirmPrompt`/`ChoicePrompt`/`TextPrompt`)
+are generic and known at compile time, `GameSessionPanel.ShowPrompt` pattern-
+matches them into real widgets (buttons for `ChoicePrompt.ValidOptions`, a
+text field for `TextPrompt`) instead of `TextGameChannel`'s raw-line parsing.
+`GameEvent` itself stays `Describe()`-only text in the scrolling event log,
+since its leaf types are plugin-internal and the client never references a
+specific plugin's assembly - but `GameEvent.CardGroups` (see "Presentation
+contract" above) *is* generic across plugins, so `GameSessionPanel.AppendEvent`
+also renders it: `CardView` (`Scripts/CardView.cs`) is a small `Control`
+that draws one card procedurally via `_Draw()` - no external image assets,
+just `DrawRect`/`DrawString` using the same `Suit`/`Rank` extensions
+(`GetSuitGlyph()`, `IsRedSuit()`) `Card.DisplayCard()` draws from for the
+console's ASCII art. `ShowCardGroups` renders each `CardGroup` as a labeled
+column of `CardView`s in a `CardDisplay` row above the event log - a
+persistent "what's showing right now" strip, replaced each time a new
+`CardGroups`-bearing event arrives, since `RichTextLabel` can't host live
+`Control` nodes inline the way the scrolling text log works.
+
+`IGameManager.StartGame()` is fully synchronous/blocking, so
+`MainController.OnPluginChosen` always runs it on a background `Task` -
+never Godot's main thread, which would freeze the engine - mirroring
+`GameSessionManager.StartSessionAsync`'s identical reasoning for SignalR
+sessions. `GodotGameChannel.Publish`/`Await` marshal onto Godot's main
+thread via `Callable.From(...).CallDeferred()` (safe from any thread, no
+`Variant` marshaling needed since the closure carries `GameEvent`/
+`GamePrompt` as plain C# state); `Await` then blocks the background thread
+on a `TaskCompletionSource<PromptResponse>` that a UI widget's callback
+resolves via `SubmitPromptResponse` - the same blocking-on-a-background-Task
+pattern `RemoteSeatChannel` uses for SignalR round trips, applied to an
+in-process UI event instead.
+
+No `tests/CardGames.Godot.Tests` project exists: `GodotGameChannel`'s
+correctness is only meaningfully exercisable inside a live Godot main loop,
+and all per-prompt-kind rendering logic lives directly in
+`GameSessionPanel`'s widget callbacks rather than an extractable class.
 
 ## Games
 

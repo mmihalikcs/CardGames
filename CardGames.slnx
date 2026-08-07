@@ -8,6 +8,7 @@
     <Project Path="source/CardGames.Application/CardGames.Application.csproj" />
     <Project Path="source/CardGames.Console/CardGames.Console.csproj" />
     <Project Path="source/CardGames.Domain/CardGames.Domain.csproj" />
+    <Project Path="source/CardGames.Godot/CardGames.Godot.csproj" />
     <Project Path="source/CardGames.Networking/CardGames.Networking.csproj" />
   </Folder>
   <Folder Name="/source/plugins/">

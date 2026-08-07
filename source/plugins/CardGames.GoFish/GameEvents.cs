@@ -4,6 +4,7 @@ using CardGames.Domain.Models;
 
 namespace CardGames.GoFish;
 
+
 internal static class Seats
 {
     internal const string Player = "player";
@@ -18,9 +19,11 @@ internal sealed record GameStarted : GameEvent
     public override string Describe() => "Welcome to Go Fish!";
 }
 
-internal sealed record HandDisplayed(string SeatId, string HandRow) : GameEvent
+internal sealed record HandDisplayed(string SeatId, IReadOnlyList<Card> Hand) : GameEvent
 {
-    public override string Describe() => $"\n{Seats.Possessive(SeatId)} hand:\n{HandRow}";
+    public override string Describe() => $"\n{Seats.Possessive(SeatId)} hand:";
+
+    public override IReadOnlyList<CardGroup> CardGroups => [new CardGroup(null, Hand)];
 }
 
 internal sealed record ComputerAnnouncedAsk(string RankLabel) : GameEvent

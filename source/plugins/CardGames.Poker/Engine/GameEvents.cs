@@ -40,12 +40,16 @@ internal sealed record InvalidSetupEntry : GameEvent
 
 internal sealed record HoleCardsRevealed(string SeatName, IReadOnlyList<Card> Cards) : GameEvent
 {
-    public override string Describe() => $"{SeatName}'s hole cards:{Environment.NewLine}{TableRenderer.RenderCardRow(Cards)}";
+    public override string Describe() => $"{SeatName}'s hole cards:";
+
+    public override IReadOnlyList<CardGroup> CardGroups => [new CardGroup(SeatName, Cards)];
 }
 
 internal sealed record CommunityCardsRevealed(IReadOnlyList<Card> Cards) : GameEvent
 {
-    public override string Describe() => $"Community cards:{Environment.NewLine}{TableRenderer.RenderCardRow(Cards)}";
+    public override string Describe() => "Community cards:";
+
+    public override IReadOnlyList<CardGroup> CardGroups => [new CardGroup("Community", Cards)];
 }
 
 internal readonly record struct StackLine(string Name, int Chips, string Status);

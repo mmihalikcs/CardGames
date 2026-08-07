@@ -86,6 +86,31 @@ public class AssemblyServiceTests
     }
 
     [Fact]
+    public void VerifyAssemblyInterfaces_PluginCopiedWithDependencyToIsolatedDirectory_ReturnsTrue()
+    {
+        // Regression test for a host (e.g. Godot's Mono runtime) whose TRUSTED_PLATFORM_ASSEMBLIES
+        // lists only its own platform assemblies, not this app's own dependencies - simulated here
+        // by giving the plugin only its immediate dependency (CardGames.Domain) sitting next to it
+        // in an isolated directory. Also exercises the resolver's de-duplication: this test host's
+        // own TRUSTED_PLATFORM_ASSEMBLIES already contains a CardGames.Domain.dll entry, so a second,
+        // same-named copy here must not make PathAssemblyResolver see two paths for one assembly name.
+        var tempDirectory = Path.Combine(Path.GetTempPath(), $"CardGames.Tests.{Guid.NewGuid()}");
+        Directory.CreateDirectory(tempDirectory);
+        try
+        {
+            var isolatedPluginPath = Path.Combine(tempDirectory, "CardGames.WAR.plugin.dll");
+            File.Copy(WARPluginPath, isolatedPluginPath);
+            File.Copy(DomainAssemblyPath, Path.Combine(tempDirectory, "CardGames.Domain.dll"));
+
+            Assert.True(_LoaderService.VerifyAssemblyInterfaces(isolatedPluginPath, typeof(IPlugin)));
+        }
+        finally
+        {
+            Directory.Delete(tempDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
     public void LoadPluginAssembly_InvalidPath_ReturnsFalse()
     {
         var missingAssemblyPath = Path.Combine(AppContext.BaseDirectory, "DoesNotExist.plugin.dll");

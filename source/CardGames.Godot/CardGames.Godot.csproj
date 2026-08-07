@@ -1,0 +1,30 @@
+<Project Sdk="Godot.NET.Sdk/4.6.2">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CardGames.Application\CardGames.Application.csproj" />
+    <!-- Not compiled against: plugins are discovered and loaded at runtime via IAssemblyLoaderService,
+         not referenced directly, so they can be unloaded from a collectible AssemblyLoadContext. -->
+    <ProjectReference Include="..\plugins\CardGames.WAR\CardGames.WAR.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\plugins\CardGames.GoFish\CardGames.GoFish.csproj" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\plugins\CardGames.Poker\CardGames.Poker.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <!-- Copies plugin build output into Godot's OutDir so IAssemblyLoaderService can discover it next
+       to the running assembly, same pattern as CardGames.Console.csproj's CopyPluginAssemblies target. -->
+  <Target Name="CopyPluginAssemblies" AfterTargets="Build">
+    <ItemGroup>
+      <PluginAssemblies Include="..\plugins\CardGames.WAR\bin\$(Configuration)\net10.0\CardGames.WAR.plugin.dll" />
+      <PluginAssemblies Include="..\plugins\CardGames.GoFish\bin\$(Configuration)\net10.0\CardGames.GoFish.plugin.dll" />
+      <PluginAssemblies Include="..\plugins\CardGames.Poker\bin\$(Configuration)\net10.0\CardGames.Poker.plugin.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(PluginAssemblies)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+</Project>

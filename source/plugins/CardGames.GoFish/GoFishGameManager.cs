@@ -1,8 +1,6 @@
 using System.ComponentModel;
 using System.Reflection;
-using System.Text;
 using CardGames.Domain.Enums;
-using CardGames.Domain.Extensions;
 using CardGames.Domain.Interaction;
 using CardGames.Domain.Interfaces;
 using CardGames.Domain.Models;
@@ -236,22 +234,7 @@ internal sealed class GoFishGameManager : IGameManager
             .ToDictionary(r => DescribeRank(r).ToUpperInvariant(), r => r);
 
     private void DisplayHand(List<Card> hand, string seatId) =>
-        _Io.Publish(new HandDisplayed(seatId, RenderHandRow(hand.OrderBy(c => (int)c.Rank).ToList())));
-
-    // Renders a hand as a row of graphical cards, matching WAR's/Poker's DisplayCard()-based rendering.
-    private static string RenderHandRow(IReadOnlyList<Card> hand)
-    {
-        if (hand.Count == 0)
-            return string.Empty;
-
-        var cardLines = hand.Select(c => c.DisplayCard().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries)).ToList();
-        int lineCount = cardLines[0].Length;
-
-        var sb = new StringBuilder();
-        for (int line = 0; line < lineCount; line++)
-            sb.AppendLine(string.Join(" ", cardLines.Select(lines => lines[line])));
-        return sb.ToString();
-    }
+        _Io.Publish(new HandDisplayed(seatId, hand.OrderBy(c => (int)c.Rank).ToList()));
 
     private void AnnounceWinner()
     {
