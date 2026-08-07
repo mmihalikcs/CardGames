@@ -1,0 +1,51 @@
+<!--
+    gdUnit4Net's scene runner resolves res:// paths only within the Godot project it's launched
+    against, so this project needs its own project.godot - which means it can't ProjectReference
+    CardGames.Godot.csproj and just work, since that project's Scenes/Scripts live under a
+    different project.godot's res:// tree. Instead we symlink Scripts/ and Scenes/ in from the
+    parent project (created by CreateSymlinks below, before MSBuild evaluates compile items) and
+    compile them directly into this test assembly, same as gdUnit4Net's own documented
+    multi-project pattern. No ProjectReference to CardGames.Godot.csproj - that would recompile
+    the symlinked files a second time and produce duplicate-type (CS0436) conflicts.
+-->
+<Project Sdk="Godot.NET.Sdk/4.6.2" InitialTargets="CreateSymlinks">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TestFramework>GdUnit4</TestFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageReference Include="gdUnit4.api" Version="5.0.0" />
+    <PackageReference Include="gdUnit4.test.adapter" Version="3.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Symlinked Scripts/ pulls in MainController.cs, which needs these - matches
+         CardGames.Godot.csproj's own ProjectReference set (minus the plugin dlls, which are only
+         needed at runtime for plugin discovery, not for compiling the symlinked scripts). -->
+    <ProjectReference Include="..\..\CardGames.Application\CardGames.Application.csproj" />
+    <ProjectReference Include="..\..\..\tests\CardGames.Common.Tests\CardGames.Common.Tests.csproj" />
+  </ItemGroup>
+
+  <Target Name="CreateSymlinks">
+    <PropertyGroup>
+      <ScriptsSource>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../Scripts'))</ScriptsSource>
+      <ScriptsTarget>$(MSBuildProjectDirectory)/Scripts</ScriptsTarget>
+      <ScenesSource>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../Scenes'))</ScenesSource>
+      <ScenesTarget>$(MSBuildProjectDirectory)/Scenes</ScenesTarget>
+    </PropertyGroup>
+    <Exec Command="[ ! -e '$(ScriptsTarget)' ] &amp;&amp; ln -s '$(ScriptsSource)' '$(ScriptsTarget)' || true" />
+    <Exec Command="[ ! -e '$(ScenesTarget)' ] &amp;&amp; ln -s '$(ScenesSource)' '$(ScenesTarget)' || true" />
+    <Error Condition="!Exists('$(ScriptsTarget)')" Text="Failed to create symlink at $(ScriptsTarget)." />
+    <Error Condition="!Exists('$(ScenesTarget)')" Text="Failed to create symlink at $(ScenesTarget)." />
+  </Target>
+
+</Project>

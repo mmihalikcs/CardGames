@@ -17,6 +17,7 @@ public partial class GameSessionPanel : Control
     private RichTextLabel _EventLog = null!;
     private VBoxContainer _PromptArea = null!;
     private VBoxContainer _GameOverPanel = null!;
+    private PauseMenuPanel _PauseMenu = null!;
 
     private GodotGameChannel? _Channel;
 
@@ -29,10 +30,39 @@ public partial class GameSessionPanel : Control
         _EventLog = GetNode<RichTextLabel>("Layout/EventLog");
         _PromptArea = GetNode<VBoxContainer>("Layout/PromptArea");
         _GameOverPanel = GetNode<VBoxContainer>("Layout/GameOverPanel");
+        _PauseMenu = GetNode<PauseMenuPanel>("PauseMenuPanel");
 
         var backButton = _GameOverPanel.GetNode<Button>("BackButton");
         backButton.Pressed += () => BackToMenuRequested?.Invoke();
+
+        _PauseMenu.QuitGameRequested += OnQuitGameRequested;
+        _PauseMenu.ExitToDesktopRequested += OnExitToDesktopRequested;
     }
+
+    // Escape opens the pause menu. Guarded against re-opening if it's already up (PauseMenuPanel
+    // handles the close half of the toggle itself, since this node stops receiving input once paused)
+    // and against opening once the game has already ended naturally (GameOverPanel visible) - "Quit
+    // Game" on top of "Back to Menu" would be redundant.
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (_PauseMenu.Visible || _GameOverPanel.Visible)
+            return;
+
+        if (@event.IsActionPressed("ui_cancel"))
+        {
+            _PauseMenu.Open();
+            GetViewport().SetInputAsHandled();
+        }
+    }
+
+    private void OnQuitGameRequested()
+    {
+        _PauseMenu.Close();
+        _Channel?.Cancel();
+        BackToMenuRequested?.Invoke();
+    }
+
+    private void OnExitToDesktopRequested() => GetTree().Quit();
 
     public void AttachChannel(GodotGameChannel channel) => _Channel = channel;
 

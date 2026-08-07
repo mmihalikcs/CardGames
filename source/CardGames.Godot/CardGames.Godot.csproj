@@ -7,6 +7,14 @@
     <EnableDynamicLoading>true</EnableDynamicLoading>
   </PropertyGroup>
 
+  <!-- Tests/ is a nested, separate project (CardGames.Godot.Tests) - excluded here so this game
+       assembly doesn't try to compile its test files (which reference the GdUnit4 package this
+       project doesn't have). Nested rather than under the top-level tests/ folder because
+       gdUnit4Net's scene runner resolves res:// paths only within the same Godot project tree. -->
+  <ItemGroup>
+    <Compile Remove="Tests/**/*.cs" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\CardGames.Application\CardGames.Application.csproj" />
     <!-- Not compiled against: plugins are discovered and loaded at runtime via IAssemblyLoaderService,

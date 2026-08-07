@@ -1,0 +1,8 @@
+# Symlinked in from ../Scripts and ../Scenes by CreateSymlinks (CardGames.Godot.Tests.csproj)
+Scripts
+Scenes
+
+.godot/
+
+# gdUnit4Net's runtime test-runner scene, regenerated on each test run
+gdunit4_testadapter_v5/

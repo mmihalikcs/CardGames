@@ -62,13 +62,19 @@ public partial class MainController : Control
 
         _ = Task.Run(() =>
         {
+            var cancelled = false;
             try
             {
                 gameManager.StartGame();
             }
+            catch (OperationCanceledException)
+            {
+                cancelled = true;
+            }
             finally
             {
-                Callable.From(_GameSessionPanel.ShowGameOver).CallDeferred();
+                if (!cancelled)
+                    Callable.From(_GameSessionPanel.ShowGameOver).CallDeferred();
             }
         });
     }
