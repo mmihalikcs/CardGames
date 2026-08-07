@@ -1,0 +1,112 @@
+name: Release
+
+# Runs after the ".NET" build/test workflow succeeds on master, so every commit that
+# lands on master and passes CI produces a semantically-versioned GitHub Release with
+# self-contained Console builds and exported Godot builds attached.
+on:
+  workflow_run:
+    workflows: [".NET"]
+    types: [completed]
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      semver: ${{ steps.nbgv.outputs.SemVer2 }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - id: nbgv
+        uses: dotnet/nbgv@v0.5.2
+        with:
+          setAllVars: true
+
+  console:
+    needs: version
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rid: [linux-x64, win-x64]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - name: Publish self-contained Console (${{ matrix.rid }})
+        run: >
+          dotnet publish source/CardGames.Console/CardGames.Console.csproj
+          -c Release -r ${{ matrix.rid }} --self-contained true
+          -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
+          -o publish/${{ matrix.rid }}
+      - name: Archive
+        run: |
+          cd publish/${{ matrix.rid }}
+          zip -r "${{ github.workspace }}/CardGames.Console-${{ matrix.rid }}-v${{ needs.version.outputs.semver }}.zip" .
+      - uses: actions/upload-artifact@v7
+        with:
+          name: console-${{ matrix.rid }}
+          path: CardGames.Console-${{ matrix.rid }}-v${{ needs.version.outputs.semver }}.zip
+          retention-days: 5
+
+  godot:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+      - name: Export Godot game
+        id: export
+        uses: firebelley/godot-export@v8.0.0
+        with:
+          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.6.2-stable/Godot_v4.6.2-stable_mono_linux_x86_64.zip
+          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.6.2-stable/Godot_v4.6.2-stable_mono_export_templates.tpz
+          relative_project_path: ./source/CardGames.Godot
+          archive_output: true
+          cache: true
+      - name: Rename archives with version
+        run: |
+          mkdir -p renamed
+          for f in "${{ steps.export.outputs.archive_directory }}"/*; do
+            base=$(basename "$f" .zip)
+            cp "$f" "renamed/${base}-v${{ needs.version.outputs.semver }}.zip"
+          done
+      - uses: actions/upload-artifact@v7
+        with:
+          name: godot-exports
+          path: renamed/*.zip
+          retention-days: 5
+
+  release:
+    needs: [version, console, godot]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Create GitHub Release
+        uses: ncipollo/release-action@v1.21.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: v${{ needs.version.outputs.semver }}
+          commit: ${{ github.event.workflow_run.head_sha }}
+          generateReleaseNotes: true
+          artifacts: artifacts/*.zip

@@ -22,13 +22,17 @@
     <InternalsVisibleTo Include="CardGames.Console.Tests" />
   </ItemGroup>
 
-  <!-- Copies plugin build output next to the host executable so IAssemblyLoaderService can discover it at runtime. -->
-  <Target Name="CopyPluginAssemblies" AfterTargets="Build">
+  <!-- Copies plugin build output next to the host executable so IAssemblyLoaderService can discover it at runtime.
+       Runs after both Build (for `dotnet run`/F5) and Publish (for `dotnet publish`, e.g. self-contained release
+       builds), since $(OutDir) and $(PublishDir) are different folders and Publish does not automatically pull in
+       files a Build-time target dropped in $(OutDir). -->
+  <Target Name="CopyPluginAssemblies" AfterTargets="Build;Publish">
     <ItemGroup>
       <PluginAssemblies Include="..\plugins\CardGames.WAR\bin\$(Configuration)\$(TargetFramework)\CardGames.WAR.plugin.dll" />
       <PluginAssemblies Include="..\plugins\CardGames.GoFish\bin\$(Configuration)\$(TargetFramework)\CardGames.GoFish.plugin.dll" />
       <PluginAssemblies Include="..\plugins\CardGames.Poker\bin\$(Configuration)\$(TargetFramework)\CardGames.Poker.plugin.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(PluginAssemblies)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(PluginAssemblies)" DestinationFolder="$(PublishDir)" Condition="'$(PublishDir)' != ''" SkipUnchangedFiles="true" />
   </Target>
 </Project>

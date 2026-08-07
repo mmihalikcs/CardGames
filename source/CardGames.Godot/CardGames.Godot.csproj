@@ -17,14 +17,18 @@
   </ItemGroup>
 
   <!-- Copies plugin build output into Godot's OutDir so IAssemblyLoaderService can discover it next
-       to the running assembly, same pattern as CardGames.Console.csproj's CopyPluginAssemblies target. -->
-  <Target Name="CopyPluginAssemblies" AfterTargets="Build">
+       to the running assembly, same pattern as CardGames.Console.csproj's CopyPluginAssemblies target.
+       Also runs AfterTargets="Publish", since Godot's headless export invokes `dotnet publish` internally
+       (not just Build) to produce the assemblies it bundles into the exported game - mirrors the fix
+       applied to Console's self-contained publish output. -->
+  <Target Name="CopyPluginAssemblies" AfterTargets="Build;Publish">
     <ItemGroup>
       <PluginAssemblies Include="..\plugins\CardGames.WAR\bin\$(Configuration)\net10.0\CardGames.WAR.plugin.dll" />
       <PluginAssemblies Include="..\plugins\CardGames.GoFish\bin\$(Configuration)\net10.0\CardGames.GoFish.plugin.dll" />
       <PluginAssemblies Include="..\plugins\CardGames.Poker\bin\$(Configuration)\net10.0\CardGames.Poker.plugin.dll" />
     </ItemGroup>
     <Copy SourceFiles="@(PluginAssemblies)" DestinationFolder="$(OutDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(PluginAssemblies)" DestinationFolder="$(PublishDir)" Condition="'$(PublishDir)' != ''" SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

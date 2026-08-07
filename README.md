@@ -43,6 +43,23 @@ scene, and it opens straight into the plugin-select screen.
 Alternatively, launch Godot with no arguments to open the Project Manager,
 click **Import**, and browse to `source/CardGames.Godot/project.godot`.
 
+## Releases
+
+Every commit that lands on `master` and passes CI is versioned with
+[Nerdbank.GitVersioning](https://github.com/dotnet/Nerdbank.GitVersioning)
+(`version.json` at the repo root - the height of commits since the last
+version bump becomes the patch number, so each build gets a unique,
+deterministic SemVer) and published as a
+[GitHub Release](../../releases) by `.github/workflows/release.yml`. Each
+release attaches:
+
+- Self-contained, single-file Console builds for `linux-x64` and `win-x64`.
+- Exported Godot builds for Linux and Windows, produced by a headless
+  Godot 4.6.2 (Mono) export using `source/CardGames.Godot/export_presets.cfg`.
+
+Run `dotnet nbgv get-version` locally to see the version the next build
+would produce.
+
 ## Table of Contents
 
 - [Architecture](docs/architecture.md)
