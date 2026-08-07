@@ -49,7 +49,7 @@ internal sealed record CommunityCardsRevealed(IReadOnlyList<Card> Cards) : GameE
 {
     public override string Describe() => "Community cards:";
 
-    public override IReadOnlyList<CardGroup> CardGroups => [new CardGroup("Community", Cards)];
+    public override IReadOnlyList<CardGroup> CardGroups => [new CardGroup("Community", Cards, CardGroupRole.Community)];
 }
 
 internal readonly record struct StackLine(string Name, int Chips, string Status);

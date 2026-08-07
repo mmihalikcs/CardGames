@@ -19,14 +19,39 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="CardDisplay" type="HBoxContainer" parent="Layout"]
+[node name="Table" type="Control" parent="Layout"]
 layout_mode = 2
-size_flags_horizontal = 3
-alignment = 1
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 260)
+
+[node name="CommunityCenter" type="CenterContainer" parent="Layout/Table"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CommunityDisplay" type="HBoxContainer" parent="Layout/Table/CommunityCenter"]
+layout_mode = 2
+
+[node name="HandBottom" type="CenterContainer" parent="Layout/Table"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -150.0
+grow_horizontal = 2
+grow_vertical = 0
+
+[node name="HandDisplay" type="HBoxContainer" parent="Layout/Table/HandBottom"]
+layout_mode = 2
 
 [node name="EventLog" type="RichTextLabel" parent="Layout"]
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_vertical = 0
+custom_minimum_size = Vector2(0, 160)
 bbcode_enabled = false
 scroll_following = true
 

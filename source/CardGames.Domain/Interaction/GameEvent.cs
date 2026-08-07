@@ -3,11 +3,24 @@ using CardGames.Domain.Models;
 namespace CardGames.Domain.Interaction;
 
 /// <summary>
+/// Where a CardGroup belongs on a structured client's table layout - a participant's own cards
+/// (default) vs. a shared/table area everyone can see (e.g. Poker's community board). A generic
+/// placement hint, not plugin-specific: a client like Godot can lay out "Own" near the local seat
+/// and "Community" at the center of the table without knowing which plugin published the event.
+/// </summary>
+public enum CardGroupRole
+{
+    Own,
+    Community
+}
+
+/// <summary>
 /// A labeled set of cards significant to a GameEvent - e.g. WAR's two revealed cards, Poker's hole/
 /// community cards, GoFish's hand. Label is a rendering hint (e.g. "You", "Community") a client can
-/// show above the group; null for an unlabeled row.
+/// show above the group; null for an unlabeled row. Role hints where the group belongs on a table
+/// layout (see <see cref="CardGroupRole"/>).
 /// </summary>
-public sealed record CardGroup(string? Label, IReadOnlyList<Card> Cards);
+public sealed record CardGroup(string? Label, IReadOnlyList<Card> Cards, CardGroupRole Role = CardGroupRole.Own);
 
 /// <summary>
 /// A fact a game manager reports through <see cref="IGameEventSink"/> - "what happened", past

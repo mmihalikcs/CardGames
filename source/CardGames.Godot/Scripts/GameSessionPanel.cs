@@ -12,7 +12,8 @@ namespace CardGames.Godot.Scripts;
 /// </summary>
 public partial class GameSessionPanel : Control
 {
-    private HBoxContainer _CardDisplay = null!;
+    private HBoxContainer _HandDisplay = null!;
+    private HBoxContainer _CommunityDisplay = null!;
     private RichTextLabel _EventLog = null!;
     private VBoxContainer _PromptArea = null!;
     private VBoxContainer _GameOverPanel = null!;
@@ -23,7 +24,8 @@ public partial class GameSessionPanel : Control
 
     public override void _Ready()
     {
-        _CardDisplay = GetNode<HBoxContainer>("Layout/CardDisplay");
+        _HandDisplay = GetNode<HBoxContainer>("Layout/Table/HandBottom/HandDisplay");
+        _CommunityDisplay = GetNode<HBoxContainer>("Layout/Table/CommunityCenter/CommunityDisplay");
         _EventLog = GetNode<RichTextLabel>("Layout/EventLog");
         _PromptArea = GetNode<VBoxContainer>("Layout/PromptArea");
         _GameOverPanel = GetNode<VBoxContainer>("Layout/GameOverPanel");
@@ -49,13 +51,27 @@ public partial class GameSessionPanel : Control
             ShowCardGroups(gameEvent.CardGroups);
     }
 
-    // Shows the most recently revealed cards as real graphics (CardView), replacing the previous
-    // group each time - a persistent "what's showing right now" strip above the scrolling text log,
-    // rather than trying to embed graphics inline in a RichTextLabel (which can't host live Control
-    // nodes). The text log still gets Describe()'s prose; only the ASCII art moved out of it.
+    // Shows the most recently revealed cards as real graphics (CardView) in one of two persistent
+    // table regions, keyed by CardGroup.Role - "Own" cards bottom-middle, "Community" cards centered
+    // on the table - rather than a single strip that every event fully replaces. Only the region a
+    // given event actually has groups for gets rebuilt, so e.g. Poker's hole-card reveal doesn't wipe
+    // out the community board an event earlier just published. The text log still gets Describe()'s
+    // prose; only the ASCII art moved out of it.
     private void ShowCardGroups(IReadOnlyList<CardGroup> groups)
     {
-        ClearCardDisplay();
+        var community = groups.Where(g => g.Role == CardGroupRole.Community).ToList();
+        var own = groups.Where(g => g.Role == CardGroupRole.Own).ToList();
+
+        if (community.Count > 0)
+            RebuildCardDisplay(_CommunityDisplay, community);
+        if (own.Count > 0)
+            RebuildCardDisplay(_HandDisplay, own);
+    }
+
+    private static void RebuildCardDisplay(HBoxContainer container, IReadOnlyList<CardGroup> groups)
+    {
+        foreach (var child in container.GetChildren())
+            child.QueueFree();
 
         foreach (var group in groups)
         {
@@ -71,13 +87,15 @@ public partial class GameSessionPanel : Control
                 cardView.SetCard(card);
             }
             column.AddChild(row);
-            _CardDisplay.AddChild(column);
+            container.AddChild(column);
         }
     }
 
     private void ClearCardDisplay()
     {
-        foreach (var child in _CardDisplay.GetChildren())
+        foreach (var child in _HandDisplay.GetChildren())
+            child.QueueFree();
+        foreach (var child in _CommunityDisplay.GetChildren())
             child.QueueFree();
     }
 
