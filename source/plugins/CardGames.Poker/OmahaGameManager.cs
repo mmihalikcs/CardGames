@@ -1,4 +1,4 @@
-using CardGames.Domain.Interfaces;
+using CardGames.Domain.Interaction;
 using CardGames.Domain.Models;
 using CardGames.Poker.Engine;
 
@@ -8,12 +8,12 @@ internal sealed class OmahaGameManager : CommunityCardGameManagerBase
 {
     protected override int HoleCardCount => 4;
 
-    public OmahaGameManager(IGameIO io) : base(io)
+    public OmahaGameManager(IGameChannel io) : base(io)
     {
     }
 
     // Test seam: rig seats/deck/random and cap hands played.
-    internal OmahaGameManager(IGameIO io, Random random, List<Seat> seats, PokerDeck deck, int maxHands = 1)
+    internal OmahaGameManager(IGameChannel io, Random random, List<Seat> seats, PokerDeck deck, int maxHands = 1)
         : base(io, random, seats, deck, maxHands)
     {
     }

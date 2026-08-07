@@ -1,14 +1,14 @@
-using CardGames.Domain.Interfaces;
+using CardGames.Domain.Interaction;
 
 namespace CardGames.Poker.Engine;
 
 internal static class ShowdownResolver
 {
-    public static void Resolve(IReadOnlyList<Seat> seatsInHand, Func<Seat, HandRank> evaluator, Pot pot, IGameIO io)
+    public static void Resolve(IReadOnlyList<Seat> seatsInHand, Func<Seat, HandRank> evaluator, Pot pot, IGameChannel io)
     {
         var ranked = seatsInHand.Select(s => (Seat: s, Rank: evaluator(s))).ToList();
         foreach (var (seat, rank) in ranked)
-            io.WriteLine($"{seat.Name} shows {Describe(rank)}.");
+            io.Publish(new HandShown(seat.Name, Describe(rank)));
 
         var best = ranked.Select(r => r.Rank).Max();
         var winners = ranked.Where(r => r.Rank.CompareTo(best) == 0).Select(r => r.Seat).ToList();
@@ -19,9 +19,7 @@ internal static class ShowdownResolver
             winner.Chips += share;
         winners[0].Chips += remainder;
 
-        io.WriteLine(winners.Count == 1
-            ? $"{winners[0].Name} wins the pot of {pot.Total}!"
-            : $"Split pot! {string.Join(", ", winners.Select(w => w.Name))} each win {share}.");
+        io.Publish(new PotAwarded(winners.Select(w => w.Name).ToList(), pot.Total, share));
     }
 
     private static string Describe(HandRank rank)

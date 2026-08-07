@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/source/CardGames.Presentation/CardGames.Presentation.csproj",
+                "${workspaceFolder}/source/CardGames.Console/CardGames.Console.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],

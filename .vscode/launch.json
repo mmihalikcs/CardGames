@@ -6,9 +6,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/source/CardGames.Presentation/bin/Debug/net10.0/CardGames.Presentation.dll",
+            "program": "${workspaceFolder}/source/CardGames.Console/bin/Debug/net10.0/CardGames.Console.dll",
             "args": [],
-            "cwd": "${workspaceFolder}/source/CardGames.Presentation",
+            "cwd": "${workspaceFolder}/source/CardGames.Console",
             "console": "externalTerminal"
         }
     ]

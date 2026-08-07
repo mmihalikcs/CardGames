@@ -1,11 +1,12 @@
 using CardGames.Application.Services;
+using CardGames.Domain.Interaction;
 using CardGames.Domain.Interfaces;
 using CardGames.Domain.Models;
 using CardGames.Networking.Client;
 using CardGames.Networking.Dtos;
 using CardGames.Networking.Hosting;
 using CardGames.Networking.Sessions;
-using CardGames.Presentation.Services;
+using CardGames.Console.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -138,9 +139,10 @@ try
                     Console.WriteLine(selectedVariant == null
                         ? $"\nStarting '{loadedPlugin.Name}'...\n"
                         : $"\nStarting '{loadedPlugin.Name}' ({selectedVariant.Name})...\n");
+                    var gameChannel = new TextGameChannel(gameIo);
                     var gameManager = selectedVariant == null
-                        ? loadedPlugin.CreateGameManager(gameIo)
-                        : loadedPlugin.CreateGameManager(gameIo, selectedVariant);
+                        ? loadedPlugin.CreateGameManager(gameChannel)
+                        : loadedPlugin.CreateGameManager(gameChannel, selectedVariant);
                     gameManager.StartGame();
                 }
                 break;

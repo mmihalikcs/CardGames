@@ -1,3 +1,4 @@
+using CardGames.Domain.Interaction;
 using CardGames.Domain.Interfaces;
 using CardGames.Domain.Models;
 using CardGames.Poker.Engine;
@@ -8,13 +9,13 @@ internal sealed class FiveCardDrawGameManager : IGameManager
 {
     private const int HandSize = 5;
 
-    private readonly IGameIO _Io;
+    private readonly IGameChannel _Io;
     private readonly Random _Random;
     private readonly int _MaxHands;
     private readonly List<Seat> _Seats;
     private PokerDeck? _PresetDeck;
 
-    public FiveCardDrawGameManager(IGameIO io)
+    public FiveCardDrawGameManager(IGameChannel io)
     {
         _Io = io ?? throw new ArgumentNullException(nameof(io));
         _Random = new Random();
@@ -24,7 +25,7 @@ internal sealed class FiveCardDrawGameManager : IGameManager
     }
 
     // Test seam: rig seats/deck/random and cap hands played.
-    internal FiveCardDrawGameManager(IGameIO io, Random random, List<Seat> seats, PokerDeck deck, int maxHands = 1)
+    internal FiveCardDrawGameManager(IGameChannel io, Random random, List<Seat> seats, PokerDeck deck, int maxHands = 1)
     {
         _Io = io ?? throw new ArgumentNullException(nameof(io));
         _Random = random ?? throw new ArgumentNullException(nameof(random));
@@ -54,8 +55,7 @@ internal sealed class FiveCardDrawGameManager : IGameManager
 
     private void PlayHand(int handNumber)
     {
-        _Io.WriteLine();
-        _Io.WriteLine("=== New Hand ===");
+        _Io.Publish(new NewHandStarted());
         foreach (var seat in _Seats)
         {
             seat.HoleCards.Clear();
@@ -94,7 +94,7 @@ internal sealed class FiveCardDrawGameManager : IGameManager
     {
         foreach (var seat in _Seats.Where(s => s.IsHuman))
         {
-            using var scope = (_Io as ISeatContextGameIO)?.BeginParticipantScope(seat.Name);
+            using var scope = (_Io as ISeatContextGameChannel)?.BeginParticipantScope(seat.Name);
             TableRenderer.ShowHoleCards(_Io, seat);
         }
     }
@@ -120,14 +120,13 @@ internal sealed class FiveCardDrawGameManager : IGameManager
 
     private void RunDrawPhase(PokerDeck deck)
     {
-        _Io.WriteLine();
-        _Io.WriteLine("--- Draw Phase ---");
+        _Io.Publish(new DrawPhaseStarted());
         foreach (var seat in _Seats.Where(s => s.IsInHand))
         {
             var discardIndices = seat.IsHuman ? PromptHumanDiscards(seat) : ChooseAiDiscardIndices(seat.HoleCards);
             if (discardIndices.Count == 0)
             {
-                _Io.WriteLine($"{seat.Name} stands pat.");
+                _Io.Publish(new SeatStoodPat(seat.Name));
                 continue;
             }
 
@@ -137,17 +136,16 @@ internal sealed class FiveCardDrawGameManager : IGameManager
             for (int i = 0; i < discardIndices.Count; i++)
                 seat.HoleCards.Add(deck.Draw());
 
-            _Io.WriteLine($"{seat.Name} draws {discardIndices.Count} card(s).");
+            _Io.Publish(new SeatDrew(seat.Name, discardIndices.Count));
         }
     }
 
     private List<int> PromptHumanDiscards(Seat seat)
     {
-        using var scope = (_Io as ISeatContextGameIO)?.BeginParticipantScope(seat.Name);
-        _Io.WriteLine();
+        using var scope = (_Io as ISeatContextGameChannel)?.BeginParticipantScope(seat.Name);
         TableRenderer.ShowHoleCards(_Io, seat);
-        _Io.Write("Enter positions to discard (1-5, space separated, blank to keep all): ");
-        var input = _Io.ReadLine();
+        var response = (TextResponse)_Io.Await(new TextPrompt(seat.Name, "Enter positions to discard (1-5, space separated, blank to keep all): "));
+        var input = response.Text;
         if (string.IsNullOrWhiteSpace(input))
             return new List<int>();
 
@@ -184,14 +182,12 @@ internal sealed class FiveCardDrawGameManager : IGameManager
     {
         var winner = _Seats.Single(s => s.IsInHand);
         winner.Chips += pot.Total;
-        _Io.WriteLine($"{winner.Name} wins the pot of {pot.Total} uncontested!");
+        _Io.Publish(new UncontestedPotAwarded(winner.Name, pot.Total));
     }
 
     private void AnnounceSessionResult()
     {
         var remaining = _Seats.Where(s => s.Chips > 0).ToList();
-        _Io.WriteLine(remaining.Count == 1
-            ? $"\n{remaining[0].Name} wins the session!"
-            : "\nSession ended.");
+        _Io.Publish(new SessionEnded(remaining.Count == 1 ? remaining[0].Name : null));
     }
 }

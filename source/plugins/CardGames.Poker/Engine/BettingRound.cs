@@ -1,4 +1,4 @@
-using CardGames.Domain.Interfaces;
+using CardGames.Domain.Interaction;
 
 namespace CardGames.Poker.Engine;
 
@@ -13,7 +13,7 @@ internal sealed class BettingRound
 {
     private readonly IReadOnlyList<Seat> _ActionOrder;
     private readonly Pot _Pot;
-    private readonly IGameIO _Io;
+    private readonly IGameChannel _Io;
     private readonly AiDecisionMaker _Ai;
     private readonly Func<Seat, double> _StrengthProvider;
     private readonly int _BetIncrement;
@@ -22,7 +22,7 @@ internal sealed class BettingRound
     public BettingRound(
         IReadOnlyList<Seat> actionOrder,
         Pot pot,
-        IGameIO io,
+        IGameChannel io,
         AiDecisionMaker ai,
         Func<Seat, double> strengthProvider,
         int betIncrement = GameSettings.BetIncrement,
@@ -93,12 +93,12 @@ internal sealed class BettingRound
         {
             case PokerAction.Fold:
                 seat.HasFolded = true;
-                _Io.WriteLine($"{seat.Name} folds.");
+                _Io.Publish(new SeatFolded(seat.Name));
                 actedSinceLastRaise.Add(seat);
                 break;
 
             case PokerAction.Check:
-                _Io.WriteLine($"{seat.Name} checks.");
+                _Io.Publish(new SeatChecked(seat.Name));
                 actedSinceLastRaise.Add(seat);
                 break;
 
@@ -110,7 +110,7 @@ internal sealed class BettingRound
                     _Pot.Add(amount);
                     if (amount < toCall)
                         seat.IsAllIn = true;
-                    _Io.WriteLine(seat.IsAllIn ? $"{seat.Name} calls {amount} and is all-in." : $"{seat.Name} calls {amount}.");
+                    _Io.Publish(new SeatCalled(seat.Name, amount, seat.IsAllIn));
                     actedSinceLastRaise.Add(seat);
                     break;
                 }
@@ -127,7 +127,7 @@ internal sealed class BettingRound
                         seat.IsAllIn = true;
                     currentBet = seat.CommittedThisStreet;
                     raises++;
-                    _Io.WriteLine(seat.IsAllIn ? $"{seat.Name} raises to {currentBet} and is all-in." : $"{seat.Name} raises to {currentBet}.");
+                    _Io.Publish(new SeatRaised(seat.Name, currentBet, seat.IsAllIn));
                     actedSinceLastRaise.Clear();
                     actedSinceLastRaise.Add(seat);
                     break;
@@ -137,17 +137,16 @@ internal sealed class BettingRound
 
     private PokerAction PromptHuman(Seat seat, int toCall, bool canRaise)
     {
-        using var scope = (_Io as ISeatContextGameIO)?.BeginParticipantScope(seat.Name);
+        using var scope = (_Io as ISeatContextGameChannel)?.BeginParticipantScope(seat.Name);
         while (true)
         {
-            _Io.WriteLine();
-            _Io.WriteLine($"Pot: {_Pot.Total} | Your chips: {seat.Chips} | To call: {toCall}");
-            var options = new List<string> { "(f)old", toCall == 0 ? "(ch)eck" : "(c)all" };
+            _Io.Publish(new BettingStatus(seat.Name, _Pot.Total, seat.Chips, toCall));
+            var options = new List<string> { "fold", toCall == 0 ? "check" : "call" };
             if (canRaise)
-                options.Add("(r)aise");
-            _Io.Write($"Action [{string.Join(", ", options)}]: ");
+                options.Add("raise");
 
-            var input = (_Io.ReadLine() ?? string.Empty).Trim().ToLowerInvariant();
+            var response = (ChoiceResponse)_Io.Await(new ChoicePrompt(seat.Name, "Action", options));
+            var input = response.OptionId.Trim().ToLowerInvariant();
             switch (input)
             {
                 case "f":
@@ -166,7 +165,7 @@ internal sealed class BettingRound
                     if (canRaise) return PokerAction.Raise;
                     break;
             }
-            _Io.WriteLine("Invalid action for the current situation. Try again.");
+            _Io.Publish(new InvalidActionRejected(seat.Name));
         }
     }
 }

@@ -13,12 +13,12 @@ public sealed class BettingRoundTests
     {
         var seats = new[] { new Seat("A", false, 500), new Seat("B", false, 500) };
         var pot = new Pot();
-        var io = new ScriptedGameIO();
+        var channel = new ScriptedGameChannel();
         var ai = new AiDecisionMaker(new Random());
 
         // strength 0.0 is always below RaiseThreshold, so with toCall == 0 the raise branch
         // short-circuits before touching the Random - deterministic regardless of RNG sequence.
-        var round = new BettingRound(seats, pot, io, ai, _ => 0.0);
+        var round = new BettingRound(seats, pot, channel, ai, _ => 0.0);
 
         var result = round.RunStreet();
 
@@ -35,10 +35,10 @@ public sealed class BettingRoundTests
         var alice = new Seat("Alice", true, 500);
         var bob = new Seat("Bob", true, 500);
         var pot = new Pot();
-        var io = new ScriptedGameIO(new[] { "raise", "call" });
+        var channel = new ScriptedGameChannel(new[] { "raise", "call" });
         var ai = new AiDecisionMaker(new Random());
 
-        var round = new BettingRound(new[] { alice, bob }, pot, io, ai, _ => 0.0);
+        var round = new BettingRound(new[] { alice, bob }, pot, channel, ai, _ => 0.0);
         var result = round.RunStreet();
 
         Assert.True(result);
@@ -54,10 +54,10 @@ public sealed class BettingRoundTests
         var alice = new Seat("Alice", true, 500);
         var bob = new Seat("Bob", true, 500);
         var pot = new Pot();
-        var io = new ScriptedGameIO(new[] { "fold" });
+        var channel = new ScriptedGameChannel(new[] { "fold" });
         var ai = new AiDecisionMaker(new Random());
 
-        var round = new BettingRound(new[] { alice, bob }, pot, io, ai, _ => 0.0);
+        var round = new BettingRound(new[] { alice, bob }, pot, channel, ai, _ => 0.0);
         var result = round.RunStreet();
 
         Assert.False(result);
@@ -73,16 +73,16 @@ public sealed class BettingRoundTests
         var bob = new Seat("Bob", true, 500);
         var pot = new Pot();
         // Bob's first "raise" attempt is rejected (cap already hit by Alice) and re-prompted.
-        var io = new ScriptedGameIO(new[] { "raise", "raise", "call" });
+        var channel = new ScriptedGameChannel(new[] { "raise", "raise", "call" });
         var ai = new AiDecisionMaker(new Random());
 
-        var round = new BettingRound(new[] { alice, bob }, pot, io, ai, _ => 0.0, maxRaises: 1);
+        var round = new BettingRound(new[] { alice, bob }, pot, channel, ai, _ => 0.0, maxRaises: 1);
         var result = round.RunStreet();
 
         Assert.True(result);
         Assert.Equal(20, pot.Total);
         Assert.Equal(490, bob.Chips);
-        Assert.Contains("Invalid action", io.AllOutput);
+        Assert.Contains(channel.Published, e => e is InvalidActionRejected { SeatName: "Bob" });
     }
 
     [Fact]
@@ -92,10 +92,10 @@ public sealed class BettingRoundTests
         var alice = new Seat("Alice", true, 5); // less than the default 10-chip bet increment
         var bob = new Seat("Bob", true, 500);
         var pot = new Pot();
-        var io = new ScriptedGameIO(new[] { "raise", "call" });
+        var channel = new ScriptedGameChannel(new[] { "raise", "call" });
         var ai = new AiDecisionMaker(new Random());
 
-        var round = new BettingRound(new[] { alice, bob }, pot, io, ai, _ => 0.0);
+        var round = new BettingRound(new[] { alice, bob }, pot, channel, ai, _ => 0.0);
         var result = round.RunStreet();
 
         Assert.True(result);

@@ -15,7 +15,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\source\CardGames.Presentation\CardGames.Presentation.csproj" />
+    <ProjectReference Include="..\..\source\CardGames.Console\CardGames.Console.csproj" />
     <ProjectReference Include="..\CardGames.Common.Tests\CardGames.Common.Tests.csproj" />
   </ItemGroup>
 </Project>

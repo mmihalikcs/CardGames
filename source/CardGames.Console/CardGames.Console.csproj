@@ -19,7 +19,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
   </ItemGroup>
   <ItemGroup>
-    <InternalsVisibleTo Include="CardGames.Presentation.Tests" />
+    <InternalsVisibleTo Include="CardGames.Console.Tests" />
   </ItemGroup>
 
   <!-- Copies plugin build output next to the host executable so IAssemblyLoaderService can discover it at runtime. -->

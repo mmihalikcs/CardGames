@@ -1,4 +1,5 @@
-﻿using CardGames.Domain.Interfaces;
+﻿using CardGames.Domain.Interaction;
+using CardGames.Domain.Interfaces;
 
 namespace CardGames.WAR;
 
@@ -10,5 +11,5 @@ public sealed class WARPlugin : IPlugin
 
     public string Version => "1.0.0";
 
-    public IGameManager CreateGameManager(IGameIO io) => new WARGameManager(io);
+    public IGameManager CreateGameManager(IGameChannel io) => new WARGameManager(io);
 }

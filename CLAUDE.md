@@ -11,7 +11,7 @@ dotnet test                                                # run all tests
 dotnet test --filter category=post-build                  # run only post-build tests (what CI runs after a build)
 dotnet test --filter FullyQualifiedName~ClassName          # run a single test class
 dotnet test --filter FullyQualifiedName~ClassName.MethodName  # run a single test method
-dotnet run --project source/CardGames.Presentation         # run the console app
+dotnet run --project source/CardGames.Console               # run the console app
 ```
 
 CI (`.github/workflows/dotnet.yml`) runs `dotnet restore`, `dotnet build --no-restore`, then `dotnet test --no-build --filter category=post-build`. The `category`/`post-build` trait comes from `CardGames.Common.Tests/TestCaseConstants.cs` (`BUILD_TEST_TRAIT_NAME` / `BUILD_TEST_TRAIT_VALUE`) — apply it via `[Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]` on tests that should run in that CI gate.
@@ -22,14 +22,26 @@ Target framework is `net10.0` across all projects, with `Nullable` and `Implicit
 
 Solution defined in `CardGames.slnx`. Application layers live under `source/`, all test projects live under the sibling top-level `tests/`:
 
-- **CardGames.Domain** — core models (`Card`, `DeckOfCards`), enums (`Suit`, `Rank`), and the public interfaces (`IPlugin`, `IGameManager`, `IGameIO`, `IAssemblyLoaderService`) that other layers and plugins depend on. No dependencies on other projects.
-- **CardGames.Application** — application services, notably `AssemblyLoaderService`, which implements `IAssemblyLoaderService`. Depends on Domain only.
-- **CardGames.Presentation** — the console entry point (`Program.cs`). Wires up a generic `IHost` with DI (`Microsoft.Extensions.Hosting`/`DependencyInjection`), loads plugins, and drives a console menu loop via `ConsoleRenderer`. Also owns `SettingsService` (`ISettingsService`'s only implementation — reads/writes `ApplicationSettings` as JSON under the user's app-data folder).
+- **CardGames.Domain** — core models (`Card`, `DeckOfCards`), enums (`Suit`, `Rank`), and the public interfaces (`IPlugin`, `IGameManager`, `IGameIO`, `IAssemblyLoaderService`) that other layers and plugins depend on. No dependencies on other projects. Also holds the structured presentation contract under `Interaction/` (`GameEvent`/`GamePrompt`/`PromptResponse`, `IGameChannel`) that plugins actually build against - see "Presentation contract" below.
+- **CardGames.Application** — application services: `AssemblyLoaderService` (implements `IAssemblyLoaderService`) and `SettingsService` (implements `ISettingsService` — reads/writes `ApplicationSettings` as JSON under the user's app-data folder). Depends on Domain only.
+- **CardGames.Console** — the console entry point (`Program.cs`). Wires up a generic `IHost` with DI (`Microsoft.Extensions.Hosting`/`DependencyInjection`), loads plugins, and drives a console menu loop via `ConsoleRenderer`.
 - **source/plugins/** — individual games (`CardGames.WAR`, `CardGames.GoFish`) built as separate class libraries, each implementing `IPlugin` and depending only on `CardGames.Domain`.
+
+### Presentation contract
+
+Plugins never touch `IGameIO` (`Write`/`WriteLine`/`ReadLine`) directly - that's a raw text-transport
+primitive implemented only by `ConsoleGameIO` and `NetworkGameIO`. `IPlugin.CreateGameManager` takes an
+`IGameChannel` instead: `Publish(GameEvent)` for "what happened" and `Await(GamePrompt): PromptResponse`
+for "what do you need from a seat" (`ConfirmPrompt`/`ChoicePrompt`/`TextPrompt`, all in
+`CardGames.Domain.Interaction`). Each plugin defines its own `GameEvent` leaf types with a `Describe()`
+override for text rendering; `TextGameChannel` (`CardGames.Domain.Interaction`) is the generic adapter
+that wraps any `IGameIO` and implements `IGameChannel` on top of it, with zero plugin-specific knowledge -
+this is what lets `ConsoleGameIO` and `NetworkGameIO` stay untouched text transports while game logic
+only ever describes facts and typed requests, never formatted prose or raw input parsing.
 
 ### Plugin loading model
 
-Each game plugin project sets `<AssemblyName>$(MSBuildProjectName).plugin</AssemblyName>`, producing a `*.plugin.dll` output. `AssemblyLoaderService` discovers plugins by scanning a directory for files matching `*.plugin.dll` and loads each into its own `System.Runtime.Loader.AssemblyLoadContext` (collectible, so it can later be unloaded via `UnloadPluginAssembly`). This isolation is intentional — new plugin functionality should go through this same load/unload lifecycle rather than direct project references from Presentation.
+Each game plugin project sets `<AssemblyName>$(MSBuildProjectName).plugin</AssemblyName>`, producing a `*.plugin.dll` output. `AssemblyLoaderService` discovers plugins by scanning a directory for files matching `*.plugin.dll` and loads each into its own `System.Runtime.Loader.AssemblyLoadContext` (collectible, so it can later be unloaded via `UnloadPluginAssembly`). This isolation is intentional — new plugin functionality should go through this same load/unload lifecycle rather than direct project references from CardGames.Console.
 
 ### Tests
 

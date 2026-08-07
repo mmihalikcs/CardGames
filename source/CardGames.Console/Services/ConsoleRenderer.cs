@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
-namespace CardGames.Presentation.Services;
+namespace CardGames.Console.Services;
 
 public class ConsoleRenderer
 {
@@ -36,12 +36,12 @@ public class ConsoleRenderer
         // Process the list
         foreach (var command in query)
         {
-            Console.WriteLine($"{command.Key}) {command.Value}");
+            System.Console.WriteLine($"{command.Key}) {command.Value}");
         }
         // Attach Exit to the bottom
-        Console.WriteLine($"0) Exit");
+        System.Console.WriteLine($"0) Exit");
         // Print selection
-        Console.Write("Enter a selection: ");
+        System.Console.Write("Enter a selection: ");
     }
 
     /// <summary>
@@ -50,14 +50,14 @@ public class ConsoleRenderer
     /// </summary>
     public void DisplaySubmenu(string title, IReadOnlyList<string> options)
     {
-        Console.WriteLine();
-        Console.WriteLine($"{title}:");
+        System.Console.WriteLine();
+        System.Console.WriteLine($"{title}:");
         for (int i = 0; i < options.Count; i++)
         {
-            Console.WriteLine($"{i + 1}) {options[i]}");
+            System.Console.WriteLine($"{i + 1}) {options[i]}");
         }
-        Console.WriteLine("0) Cancel");
-        Console.Write("Enter a selection: ");
+        System.Console.WriteLine("0) Cancel");
+        System.Console.Write("Enter a selection: ");
     }
 
     // Private Members

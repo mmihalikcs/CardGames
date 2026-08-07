@@ -27,14 +27,14 @@ public sealed class TexasHoldemGameManagerTests
             C(Suit.Spades, Rank.Nine),
             C(Suit.Clubs, Rank.Four),
         });
-        var io = new ScriptedGameIO(defaultResponse: "check");
+        var channel = new ScriptedGameChannel(defaultResponse: "check");
 
-        var manager = new TexasHoldemGameManager(io, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
+        var manager = new TexasHoldemGameManager(channel, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
         manager.StartGame();
 
         Assert.Equal(510, alice.Chips);
         Assert.Equal(490, bob.Chips);
-        Assert.Contains("Alice wins the pot of 20!", io.AllOutput);
+        Assert.Contains(channel.Published, e => e is PotAwarded { WinnerNames: ["Alice"], Total: 20 });
     }
 
     [Fact]
@@ -48,15 +48,15 @@ public sealed class TexasHoldemGameManagerTests
             C(Suit.Spades, Rank.Two), C(Suit.Clubs, Rank.Three),
             C(Suit.Hearts, Rank.Four), C(Suit.Diamonds, Rank.Five),
         });
-        var io = new ScriptedGameIO(new[] { "fold" });
+        var channel = new ScriptedGameChannel(new[] { "fold" });
 
-        var manager = new TexasHoldemGameManager(io, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
+        var manager = new TexasHoldemGameManager(channel, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
         manager.StartGame();
 
         Assert.True(alice.HasFolded);
         Assert.Equal(490, alice.Chips);
         Assert.Equal(510, bob.Chips);
-        Assert.Contains("Bob wins the pot of 20 uncontested!", io.AllOutput);
-        Assert.DoesNotContain("Community cards:", io.AllOutput);
+        Assert.Contains(channel.Published, e => e is UncontestedPotAwarded { WinnerName: "Bob", Total: 20 });
+        Assert.DoesNotContain(channel.Published, e => e is CommunityCardsRevealed);
     }
 }

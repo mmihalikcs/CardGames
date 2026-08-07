@@ -1,5 +1,6 @@
 using CardGames.Common.Tests;
 using CardGames.Domain.Enums;
+using CardGames.Domain.Interaction;
 using CardGames.Domain.Models;
 using CardGames.Poker.Engine;
 using CardGames.Poker.Tests.Fakes;
@@ -9,7 +10,7 @@ namespace CardGames.Poker.Tests;
 
 /// <summary>
 /// Proves each human seat only ever sees its own hole cards and is prompted independently,
-/// via ISeatContextGameIO scoping (BettingRound.PromptHuman / *.ShowHoleCardsToEachHuman /
+/// via ISeatContextGameChannel scoping (BettingRound.PromptHuman / *.ShowHoleCardsToEachHuman /
 /// FiveCardDrawGameManager.PromptHumanDiscards).
 /// </summary>
 public sealed class MultiHumanSeatRoutingTests
@@ -30,24 +31,24 @@ public sealed class MultiHumanSeatRoutingTests
             C(Suit.Spades, Rank.Nine),
             C(Suit.Clubs, Rank.Four),
         });
-        var io = new ScriptedSeatContextGameIO(defaultResponse: "check");
+        var channel = new ScriptedSeatContextGameChannel(defaultResponse: "check");
 
-        var manager = new TexasHoldemGameManager(io, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
+        var manager = new TexasHoldemGameManager(channel, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
         manager.StartGame();
 
-        var aliceOutput = io.OutputFor("Alice");
-        var bobOutput = io.OutputFor("Bob");
+        var aliceEvents = channel.EventsFor("Alice");
+        var bobEvents = channel.EventsFor("Bob");
 
-        Assert.Contains(aliceOutput, line => line.Contains("Alice's hole cards:"));
-        Assert.DoesNotContain(aliceOutput, line => line.Contains("Bob's hole cards:"));
-        Assert.Contains(aliceOutput, line => line.StartsWith("Action ["));
+        Assert.Contains(aliceEvents, e => e is HoleCardsRevealed { SeatName: "Alice" });
+        Assert.DoesNotContain(aliceEvents, e => e is HoleCardsRevealed { SeatName: "Bob" });
+        Assert.Contains(channel.PromptsFor("Alice"), p => p is ChoicePrompt { Message: "Action" });
 
-        Assert.Contains(bobOutput, line => line.Contains("Bob's hole cards:"));
-        Assert.DoesNotContain(bobOutput, line => line.Contains("Alice's hole cards:"));
-        Assert.Contains(bobOutput, line => line.StartsWith("Action ["));
+        Assert.Contains(bobEvents, e => e is HoleCardsRevealed { SeatName: "Bob" });
+        Assert.DoesNotContain(bobEvents, e => e is HoleCardsRevealed { SeatName: "Alice" });
+        Assert.Contains(channel.PromptsFor("Bob"), p => p is ChoicePrompt { Message: "Action" });
 
         // Public table state is broadcast (unscoped), not attributed to either seat.
-        Assert.Contains(io.BroadcastOutput, line => line.Contains("Community cards:"));
+        Assert.Contains(channel.BroadcastEvents, e => e is CommunityCardsRevealed);
 
         Assert.Equal(510, alice.Chips);
         Assert.Equal(490, bob.Chips);
@@ -67,23 +68,26 @@ public sealed class MultiHumanSeatRoutingTests
             C(Suit.Diamonds, Rank.Queen), C(Suit.Hearts, Rank.Four),
             C(Suit.Hearts, Rank.Jack), C(Suit.Diamonds, Rank.Six),
         });
-        var io = new ScriptedSeatContextGameIO(new Dictionary<string, IEnumerable<string?>>
+        var channel = new ScriptedSeatContextGameChannel(new Dictionary<string, IEnumerable<string?>>
         {
             ["Alice"] = new[] { "check", "", "check" },
             ["Bob"] = new[] { "check", "", "check" },
         });
 
-        var manager = new FiveCardDrawGameManager(io, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
+        var manager = new FiveCardDrawGameManager(channel, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
         manager.StartGame();
 
-        var aliceOutput = io.OutputFor("Alice");
-        var bobOutput = io.OutputFor("Bob");
+        var aliceEvents = channel.EventsFor("Alice");
+        var bobEvents = channel.EventsFor("Bob");
 
-        Assert.Contains(aliceOutput, line => line.Contains("Alice's hole cards:"));
-        Assert.DoesNotContain(aliceOutput, line => line.Contains("Bob's hole cards:"));
+        Assert.Contains(aliceEvents, e => e is HoleCardsRevealed { SeatName: "Alice" });
+        Assert.DoesNotContain(aliceEvents, e => e is HoleCardsRevealed { SeatName: "Bob" });
 
-        Assert.Contains(bobOutput, line => line.Contains("Bob's hole cards:"));
-        Assert.DoesNotContain(bobOutput, line => line.Contains("Alice's hole cards:"));
+        Assert.Contains(bobEvents, e => e is HoleCardsRevealed { SeatName: "Bob" });
+        Assert.DoesNotContain(bobEvents, e => e is HoleCardsRevealed { SeatName: "Alice" });
+
+        Assert.Contains(channel.PromptsFor("Alice"), p => p is TextPrompt);
+        Assert.Contains(channel.PromptsFor("Bob"), p => p is TextPrompt);
 
         Assert.Equal(510, alice.Chips);
         Assert.Equal(490, bob.Chips);

@@ -1,7 +1,6 @@
-using CardGames.Domain.Extensions;
+using CardGames.Domain.Interaction;
 using CardGames.Domain.Interfaces;
 using CardGames.Domain.Models;
-using System.Text;
 
 namespace CardGames.WAR;
 
@@ -10,7 +9,7 @@ internal sealed class WARGameManager : IGameManager
     private const int WarCardCount = 4; // 3 face-down + 1 face-up, standard rule
     private const int DefaultMaxRounds = 10_000;
 
-    private readonly IGameIO _Io;
+    private readonly IGameChannel _Io;
     private readonly int _MaxRounds;
     private Queue<Card> _PlayerHand;
     private Queue<Card> _ComputerHand;
@@ -18,11 +17,11 @@ internal sealed class WARGameManager : IGameManager
     internal int PlayerHandCount => _PlayerHand.Count;
     internal int ComputerHandCount => _ComputerHand.Count;
 
-    public WARGameManager(IGameIO io) : this(io, DefaultMaxRounds)
+    public WARGameManager(IGameChannel io) : this(io, DefaultMaxRounds)
     {
     }
 
-    private WARGameManager(IGameIO io, int maxRounds)
+    private WARGameManager(IGameChannel io, int maxRounds)
     {
         _Io = io ?? throw new ArgumentNullException(nameof(io));
         _MaxRounds = maxRounds;
@@ -31,7 +30,7 @@ internal sealed class WARGameManager : IGameManager
     }
 
     // Test seam: lets tests rig exact hands and shrink the round cap.
-    internal WARGameManager(IGameIO io, Queue<Card> playerHand, Queue<Card> computerHand, int maxRounds = DefaultMaxRounds)
+    internal WARGameManager(IGameChannel io, Queue<Card> playerHand, Queue<Card> computerHand, int maxRounds = DefaultMaxRounds)
         : this(io, maxRounds)
     {
         _PlayerHand = playerHand;
@@ -67,45 +66,45 @@ internal sealed class WARGameManager : IGameManager
 
     private void PlayRounds()
     {
-        _Io.WriteLine("Welcome to WAR! Press Enter after each round to continue.");
+        _Io.Publish(new GameStarted());
         int round = 0;
         while (_PlayerHand.Count > 0 && _ComputerHand.Count > 0 && round < _MaxRounds)
         {
             round++;
-            _Io.Write("\nPress Enter to flip your next cards...");
-            _Io.ReadLine();
+            _Io.Await(new ConfirmPrompt(Seats.Player, "\nPress Enter to flip your next cards..."));
 
             var pile = new List<Card>();
             var playerCard = _PlayerHand.Dequeue();
             var computerCard = _ComputerHand.Dequeue();
             pile.Add(playerCard);
             pile.Add(computerCard);
-            _Io.WriteLine($"You played {playerCard}. Computer played {computerCard}.");
-            _Io.WriteLine(RenderVersus(playerCard, "You", computerCard, "Computer"));
+            _Io.Publish(new CardsRevealed(playerCard, computerCard, Reason: "Flip"));
 
             int cmp = ((int)playerCard.Rank).CompareTo((int)computerCard.Rank);
             if (cmp > 0)
-                AwardPile(_PlayerHand, pile, "You");
+                AwardPile(_PlayerHand, pile, Seats.Player);
             else if (cmp < 0)
-                AwardPile(_ComputerHand, pile, "Computer");
+                AwardPile(_ComputerHand, pile, Seats.Computer);
             else
             {
-                _Io.WriteLine("War!");
-                ResolveWar(pile);
+                _Io.Publish(new WarTriggered());
+                if (!ResolveWar(pile))
+                    return; // ended the game (mutual/one-sided run-out during war)
             }
         }
 
         AnnounceResult(round);
     }
 
-    private void AwardPile(Queue<Card> winnerHand, List<Card> pile, string winnerLabel)
+    private void AwardPile(Queue<Card> winnerHand, List<Card> pile, string winnerSeatId)
     {
-        _Io.WriteLine($"{winnerLabel} won the pile of {pile.Count} card(s).");
+        _Io.Publish(new PileAwarded(winnerSeatId, pile.Count));
         foreach (var card in pile)
             winnerHand.Enqueue(card);
     }
 
-    private void ResolveWar(List<Card> pile)
+    /// <returns>false if the war ended the game outright (a hand ran out mid-war).</returns>
+    private bool ResolveWar(List<Card> pile)
     {
         while (true)
         {
@@ -116,52 +115,38 @@ internal sealed class WARGameManager : IGameManager
 
             if (playerFaceUp is null && computerFaceUp is null)
             {
-                _Io.WriteLine("Both players ran out of cards at the same time - the game ends in a draw.");
-                return;
+                _Io.Publish(new GameEnded(WinnerSeatId: null, Reason: "MutualRunOutDuringWar"));
+                return false;
             }
             if (playerFaceUp is null)
             {
-                _Io.WriteLine("You ran out of cards during the war and lose the game!");
-                AwardPile(_ComputerHand, pile, "Computer");
-                return;
+                _Io.Publish(new GameEnded(Seats.Computer, Reason: "OpponentRanOutDuringWar"));
+                AwardPile(_ComputerHand, pile, Seats.Computer);
+                return false;
             }
             if (computerFaceUp is null)
             {
-                _Io.WriteLine("Computer ran out of cards during the war and loses the game!");
-                AwardPile(_PlayerHand, pile, "You");
-                return;
+                _Io.Publish(new GameEnded(Seats.Player, Reason: "OpponentRanOutDuringWar"));
+                AwardPile(_PlayerHand, pile, Seats.Player);
+                return false;
             }
 
-            _Io.WriteLine($"War cards: You played {playerFaceUp}. Computer played {computerFaceUp}.");
-            _Io.WriteLine(RenderVersus(playerFaceUp, "You", computerFaceUp, "Computer"));
+            _Io.Publish(new CardsRevealed(playerFaceUp, computerFaceUp, Reason: "War"));
 
             int cmp = ((int)playerFaceUp.Rank).CompareTo((int)computerFaceUp.Rank);
             if (cmp > 0)
             {
-                AwardPile(_PlayerHand, pile, "You");
-                return;
+                AwardPile(_PlayerHand, pile, Seats.Player);
+                return true;
             }
             if (cmp < 0)
             {
-                AwardPile(_ComputerHand, pile, "Computer");
-                return;
+                AwardPile(_ComputerHand, pile, Seats.Computer);
+                return true;
             }
 
-            _Io.WriteLine("War again!");
+            _Io.Publish(new WarTriggered(Repeat: true));
         }
-    }
-
-    // Renders two cards side-by-side (e.g. "You" vs. "Computer") for a visual round display.
-    private static string RenderVersus(Card left, string leftLabel, Card right, string rightLabel)
-    {
-        var leftLines = left.DisplayCard().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-        var rightLines = right.DisplayCard().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
-
-        var sb = new StringBuilder();
-        sb.AppendLine($"{leftLabel.PadRight(leftLines[0].Length)}   {rightLabel}");
-        for (int i = 0; i < leftLines.Length; i++)
-            sb.AppendLine($"{leftLines[i]}   {rightLines[i]}");
-        return sb.ToString();
     }
 
     // Commits up to `count` cards from hand; if fewer remain, commits all of them.
@@ -178,28 +163,26 @@ internal sealed class WARGameManager : IGameManager
     {
         if (_PlayerHand.Count > 0 && _ComputerHand.Count > 0 && roundsPlayed >= _MaxRounds)
         {
-            _Io.WriteLine($"\nRound limit ({_MaxRounds}) reached without a natural winner.");
-            if (_PlayerHand.Count > _ComputerHand.Count)
-                _Io.WriteLine("You win on card count!");
-            else if (_ComputerHand.Count > _PlayerHand.Count)
-                _Io.WriteLine("Computer wins on card count!");
-            else
-                _Io.WriteLine("It's a draw!");
+            _Io.Publish(new RoundLimitReached(_MaxRounds));
+            var leader = _PlayerHand.Count > _ComputerHand.Count ? Seats.Player
+                : _ComputerHand.Count > _PlayerHand.Count ? Seats.Computer
+                : (string?)null;
+            _Io.Publish(new GameEnded(leader, Reason: "RoundLimitReached"));
             return;
         }
 
         if (_PlayerHand.Count == 0 && _ComputerHand.Count == 0)
         {
-            _Io.WriteLine("\nThe game ended in a draw - both players ran out of cards at once.");
+            _Io.Publish(new GameEnded(null, Reason: "MutualRunOut"));
             return;
         }
 
         if (_PlayerHand.Count == 0)
         {
-            _Io.WriteLine("\nComputer wins! You ran out of cards.");
+            _Io.Publish(new GameEnded(Seats.Computer, Reason: "RanOutOfCards"));
             return;
         }
 
-        _Io.WriteLine("\nYou win! Computer ran out of cards.");
+        _Io.Publish(new GameEnded(Seats.Player, Reason: "RanOutOfCards"));
     }
 }

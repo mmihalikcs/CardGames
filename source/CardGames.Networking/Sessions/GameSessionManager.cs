@@ -1,3 +1,4 @@
+using CardGames.Domain.Interaction;
 using CardGames.Domain.Interfaces;
 using CardGames.Domain.Models;
 using CardGames.Networking.Bridge;
@@ -139,7 +140,8 @@ public sealed class GameSessionManager : IGameSessionManager
         setupAnswers.Add(session.AiOpponentCount.ToString());
 
         var networkIo = new NetworkGameIO(channels, setupAnswers);
-        var gameManager = variant == null ? plugin.CreateGameManager(networkIo) : plugin.CreateGameManager(networkIo, variant);
+        var gameChannel = new TextGameChannel(networkIo);
+        var gameManager = variant == null ? plugin.CreateGameManager(gameChannel) : plugin.CreateGameManager(gameChannel, variant);
 
         var gameTask = Task.Run(() => gameManager.StartGame());
         session.GameTask = gameTask;

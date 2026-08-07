@@ -1,3 +1,4 @@
+using CardGames.Domain.Interaction;
 using CardGames.Domain.Interfaces;
 using CardGames.Domain.Models;
 
@@ -10,7 +11,7 @@ namespace CardGames.Poker.Engine;
 /// </summary>
 internal abstract class CommunityCardGameManagerBase : IGameManager
 {
-    protected readonly IGameIO Io;
+    protected readonly IGameChannel Io;
     private readonly Random _Random;
     private readonly int _MaxHands;
     private readonly List<Seat> _Seats;
@@ -20,13 +21,13 @@ internal abstract class CommunityCardGameManagerBase : IGameManager
 
     protected abstract HandRank EvaluateShowdown(Seat seat, IReadOnlyList<Card> community);
 
-    protected CommunityCardGameManagerBase(IGameIO io)
+    protected CommunityCardGameManagerBase(IGameChannel io)
         : this(io, new Random(), new List<Seat>(), null, GameSettings.DefaultMaxHands)
     {
     }
 
     // Test seam: rig seats/deck/random and cap hands played (typically 1 per test).
-    protected CommunityCardGameManagerBase(IGameIO io, Random random, List<Seat> seats, PokerDeck? deck, int maxHands)
+    protected CommunityCardGameManagerBase(IGameChannel io, Random random, List<Seat> seats, PokerDeck? deck, int maxHands)
     {
         Io = io ?? throw new ArgumentNullException(nameof(io));
         _Random = random ?? throw new ArgumentNullException(nameof(random));
@@ -56,8 +57,7 @@ internal abstract class CommunityCardGameManagerBase : IGameManager
 
     private void PlayHand(int handNumber)
     {
-        Io.WriteLine();
-        Io.WriteLine("=== New Hand ===");
+        Io.Publish(new NewHandStarted());
         foreach (var seat in _Seats)
         {
             seat.HoleCards.Clear();
@@ -107,7 +107,7 @@ internal abstract class CommunityCardGameManagerBase : IGameManager
     {
         foreach (var seat in _Seats.Where(s => s.IsHuman))
         {
-            using var scope = (Io as ISeatContextGameIO)?.BeginParticipantScope(seat.Name);
+            using var scope = (Io as ISeatContextGameChannel)?.BeginParticipantScope(seat.Name);
             TableRenderer.ShowHoleCards(Io, seat);
         }
     }
@@ -144,7 +144,7 @@ internal abstract class CommunityCardGameManagerBase : IGameManager
     {
         var winner = _Seats.Single(s => s.IsInHand);
         winner.Chips += pot.Total;
-        Io.WriteLine($"{winner.Name} wins the pot of {pot.Total} uncontested!");
+        Io.Publish(new UncontestedPotAwarded(winner.Name, pot.Total));
     }
 
     private static void DealCommunity(PokerDeck deck, List<Card> community, int count)
@@ -156,8 +156,6 @@ internal abstract class CommunityCardGameManagerBase : IGameManager
     private void AnnounceSessionResult()
     {
         var remaining = _Seats.Where(s => s.Chips > 0).ToList();
-        Io.WriteLine(remaining.Count == 1
-            ? $"\n{remaining[0].Name} wins the session!"
-            : "\nSession ended.");
+        Io.Publish(new SessionEnded(remaining.Count == 1 ? remaining[0].Name : null));
     }
 }

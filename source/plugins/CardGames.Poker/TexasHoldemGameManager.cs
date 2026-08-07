@@ -1,4 +1,4 @@
-using CardGames.Domain.Interfaces;
+using CardGames.Domain.Interaction;
 using CardGames.Domain.Models;
 using CardGames.Poker.Engine;
 
@@ -8,12 +8,12 @@ internal sealed class TexasHoldemGameManager : CommunityCardGameManagerBase
 {
     protected override int HoleCardCount => 2;
 
-    public TexasHoldemGameManager(IGameIO io) : base(io)
+    public TexasHoldemGameManager(IGameChannel io) : base(io)
     {
     }
 
     // Test seam: rig seats/deck/random and cap hands played.
-    internal TexasHoldemGameManager(IGameIO io, Random random, List<Seat> seats, PokerDeck deck, int maxHands = 1)
+    internal TexasHoldemGameManager(IGameChannel io, Random random, List<Seat> seats, PokerDeck deck, int maxHands = 1)
         : base(io, random, seats, deck, maxHands)
     {
     }

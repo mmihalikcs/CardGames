@@ -1,10 +1,10 @@
 using CardGames.Common.Tests;
-using CardGames.Presentation.Services;
-using CardGames.Presentation.Tests.Fakes;
+using CardGames.Console.Services;
+using CardGames.Console.Tests.Fakes;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
-namespace CardGames.Presentation.Tests.Services;
+namespace CardGames.Console.Tests.Services;
 
 public sealed class ConsoleRendererTests
 {
@@ -45,11 +45,11 @@ public sealed class ConsoleRendererTests
     [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
     public void DisplayMenu_WritesEveryCommandAndExit()
     {
-        var originalOut = Console.Out;
+        var originalOut = System.Console.Out;
         try
         {
             using var writer = new StringWriter();
-            Console.SetOut(writer);
+            System.Console.SetOut(writer);
 
             _Renderer.DisplayMenu();
 
@@ -63,7 +63,7 @@ public sealed class ConsoleRendererTests
         }
         finally
         {
-            Console.SetOut(originalOut);
+            System.Console.SetOut(originalOut);
         }
     }
 
@@ -71,11 +71,11 @@ public sealed class ConsoleRendererTests
     [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
     public void DisplaySubmenu_WritesTitleOptionsAndCancelPrompt()
     {
-        var originalOut = Console.Out;
+        var originalOut = System.Console.Out;
         try
         {
             using var writer = new StringWriter();
-            Console.SetOut(writer);
+            System.Console.SetOut(writer);
 
             _Renderer.DisplaySubmenu("Select a Poker variant", new[] { "Texas Hold'em", "Omaha", "Five-Card Draw" });
 
@@ -89,7 +89,7 @@ public sealed class ConsoleRendererTests
         }
         finally
         {
-            Console.SetOut(originalOut);
+            System.Console.SetOut(originalOut);
         }
     }
 
@@ -97,11 +97,11 @@ public sealed class ConsoleRendererTests
     [Trait(TestCaseConstants.BUILD_TEST_TRAIT_NAME, TestCaseConstants.BUILD_TEST_TRAIT_VALUE)]
     public void DisplaySubmenu_EmptyOptions_WritesOnlyCancelPrompt()
     {
-        var originalOut = Console.Out;
+        var originalOut = System.Console.Out;
         try
         {
             using var writer = new StringWriter();
-            Console.SetOut(writer);
+            System.Console.SetOut(writer);
 
             _Renderer.DisplaySubmenu("Select a variant", Array.Empty<string>());
 
@@ -112,7 +112,7 @@ public sealed class ConsoleRendererTests
         }
         finally
         {
-            Console.SetOut(originalOut);
+            System.Console.SetOut(originalOut);
         }
     }
 }

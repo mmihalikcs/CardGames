@@ -20,8 +20,8 @@ public sealed class GoFishGameManagerTests
             new Card(Suit.Hearts, Rank.Two),
         };
         var computerHand = new List<Card> { new Card(Suit.Spades, Rank.Seven) };
-        var io = new ScriptedGameIO(new[] { "7" });
-        var manager = new GoFishGameManager(io, new Random(1), playerHand, computerHand, new DeckOfCards());
+        var channel = new ScriptedGameChannel(new[] { "7" });
+        var manager = new GoFishGameManager(channel, new Random(1), playerHand, computerHand, new DeckOfCards());
 
         manager.StartGame();
 
@@ -29,8 +29,8 @@ public sealed class GoFishGameManagerTests
         Assert.Equal(0, manager.ComputerBookCount);
         Assert.Equal(1, manager.PlayerHandCount);
         Assert.Equal(0, manager.ComputerHandCount);
-        Assert.Contains("completed a book of 7s!", io.AllOutput);
-        Assert.Contains("You win!", io.AllOutput);
+        Assert.Contains(channel.Published, e => e is BookCompleted { SeatId: "player", RankLabel: "7" });
+        Assert.Contains(channel.Published, e => e is GameEnded { WinnerSeatId: "player" });
     }
 
     [Fact]
@@ -41,16 +41,16 @@ public sealed class GoFishGameManagerTests
         var computerHand = new List<Card>();
         var drawPile = new DeckOfCards();
         drawPile.AddCard(new Card(Suit.Hearts, Rank.Five));
-        var io = new ScriptedGameIO(new[] { "2" });
-        var manager = new GoFishGameManager(io, new Random(1), playerHand, computerHand, drawPile);
+        var channel = new ScriptedGameChannel(new[] { "2" });
+        var manager = new GoFishGameManager(channel, new Random(1), playerHand, computerHand, drawPile);
 
         manager.StartGame();
 
-        Assert.Contains("Go Fish!", io.AllOutput);
+        Assert.Contains(channel.Published, e => e is GoFishCalled { ResponderSeatId: "computer" });
         Assert.Equal(2, manager.PlayerHandCount);
         Assert.Equal(0, manager.ComputerHandCount);
         Assert.Equal(0, manager.DrawPileCount);
-        Assert.Contains("It's a draw!", io.AllOutput);
+        Assert.Contains(channel.Published, e => e is GameEnded { WinnerSeatId: null });
     }
 
     [Fact]
@@ -61,12 +61,12 @@ public sealed class GoFishGameManagerTests
         var computerHand = new List<Card>();
         var drawPile = new DeckOfCards();
         drawPile.AddCard(new Card(Suit.Spades, Rank.Two));
-        var io = new ScriptedGameIO(new[] { "2" });
-        var manager = new GoFishGameManager(io, new Random(1), playerHand, computerHand, drawPile);
+        var channel = new ScriptedGameChannel(new[] { "2" });
+        var manager = new GoFishGameManager(channel, new Random(1), playerHand, computerHand, drawPile);
 
         manager.StartGame();
 
-        Assert.Contains("go again!", io.AllOutput);
+        Assert.Contains(channel.Published, e => e is DrewAskedRank { SeatId: "player", RankLabel: "2" });
         Assert.Equal(2, manager.PlayerHandCount);
         Assert.Equal(0, manager.DrawPileCount);
     }
@@ -77,14 +77,13 @@ public sealed class GoFishGameManagerTests
     {
         var playerHand = new List<Card>();
         var computerHand = new List<Card> { new Card(Suit.Hearts, Rank.Two) };
-        var io = new ScriptedGameIO();
-        var manager = new GoFishGameManager(io, new Random(1), playerHand, computerHand, new DeckOfCards(), playerBooks: 3, computerBooks: 1);
+        var channel = new ScriptedGameChannel();
+        var manager = new GoFishGameManager(channel, new Random(1), playerHand, computerHand, new DeckOfCards(), playerBooks: 3, computerBooks: 1);
 
         manager.StartGame();
 
-        Assert.DoesNotContain("Ask for a rank", io.AllOutput);
-        Assert.Contains("You: 3 book(s), Computer: 1 book(s)", io.AllOutput);
-        Assert.Contains("You win!", io.AllOutput);
+        Assert.DoesNotContain(channel.Published, e => e is HandDisplayed);
+        Assert.Contains(channel.Published, e => e is GameEnded { PlayerBooks: 3, ComputerBooks: 1, WinnerSeatId: "player" });
     }
 
     [Fact]
@@ -95,12 +94,12 @@ public sealed class GoFishGameManagerTests
         var computerHand = new List<Card>();
         var drawPile = new DeckOfCards();
         drawPile.AddCard(new Card(Suit.Hearts, Rank.Five));
-        var io = new ScriptedGameIO(new[] { "9", "2" });
-        var manager = new GoFishGameManager(io, new Random(1), playerHand, computerHand, drawPile);
+        var channel = new ScriptedGameChannel(new[] { "9", "2" });
+        var manager = new GoFishGameManager(channel, new Random(1), playerHand, computerHand, drawPile);
 
         manager.StartGame();
 
-        Assert.Contains("You can only ask for a rank you currently hold. Try again.", io.AllOutput);
-        Assert.Contains("Go Fish!", io.AllOutput);
+        Assert.Contains(channel.Published, e => e is RankAskRejected { SeatId: "player" });
+        Assert.Contains(channel.Published, e => e is GoFishCalled { ResponderSeatId: "computer" });
     }
 }

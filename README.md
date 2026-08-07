@@ -1,7 +1,7 @@
 # CardGames
 
 A plugin-hosted console application for playing card games, built on .NET 10.
-A small Presentation layer drives a console menu loop and delegates gameplay
+A small Console layer drives a console menu loop and delegates gameplay
 to game plugins that are discovered and loaded at runtime from `*.plugin.dll`
 files, each isolated in its own collectible `AssemblyLoadContext`.
 
@@ -20,7 +20,7 @@ layers, plugin loading model, and each game's implementation.
 dotnet restore
 dotnet build
 dotnet test
-dotnet run --project source/CardGames.Presentation
+dotnet run --project source/CardGames.Console
 ```
 
 ## Table of Contents

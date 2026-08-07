@@ -6,9 +6,9 @@
   </Configurations>
   <Folder Name="/source/">
     <Project Path="source/CardGames.Application/CardGames.Application.csproj" />
+    <Project Path="source/CardGames.Console/CardGames.Console.csproj" />
     <Project Path="source/CardGames.Domain/CardGames.Domain.csproj" />
     <Project Path="source/CardGames.Networking/CardGames.Networking.csproj" />
-    <Project Path="source/CardGames.Presentation/CardGames.Presentation.csproj" />
   </Folder>
   <Folder Name="/source/plugins/">
     <Project Path="source/plugins/CardGames.GoFish/CardGames.GoFish.csproj" />
@@ -18,11 +18,11 @@
   <Folder Name="/tests/">
     <Project Path="tests/CardGames.Application.Tests/CardGames.Application.Tests.csproj" />
     <Project Path="tests/CardGames.Common.Tests/CardGames.Common.Tests.csproj" />
+    <Project Path="tests/CardGames.Console.Tests/CardGames.Console.Tests.csproj" />
     <Project Path="tests/CardGames.Domain.Tests/CardGames.Domain.Tests.csproj" />
     <Project Path="tests/CardGames.GoFish.Tests/CardGames.GoFish.Tests.csproj" />
     <Project Path="tests/CardGames.Networking.Tests/CardGames.Networking.Tests.csproj" />
     <Project Path="tests/CardGames.Poker.Tests/CardGames.Poker.Tests.csproj" />
-    <Project Path="tests/CardGames.Presentation.Tests/CardGames.Presentation.Tests.csproj" />
     <Project Path="tests/CardGames.WAR.Tests/CardGames.WAR.Tests.csproj" />
   </Folder>
 </Solution>

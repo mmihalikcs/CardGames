@@ -1,13 +1,13 @@
 using CardGames.Domain.Extensions;
-using CardGames.Domain.Interfaces;
+using CardGames.Domain.Interaction;
 using CardGames.Domain.Models;
 using System.Text;
 
 namespace CardGames.Poker.Engine;
 
 /// <summary>
-/// Console rendering helpers built on Card.DisplayCard(), generalizing WAR's RenderVersus
-/// side-by-side technique to N cards. AI hole cards must only ever be shown at showdown.
+/// Rendering helpers built on Card.DisplayCard(), generalizing WAR's RenderVersus side-by-side
+/// technique to N cards. AI hole cards must only ever be shown at showdown.
 /// </summary>
 internal static class TableRenderer
 {
@@ -27,27 +27,21 @@ internal static class TableRenderer
         return sb.ToString();
     }
 
-    public static void ShowHoleCards(IGameIO io, Seat seat)
-    {
-        io.WriteLine($"{seat.Name}'s hole cards:");
-        io.WriteLine(RenderCardRow(seat.HoleCards));
-    }
+    public static void ShowHoleCards(IGameChannel io, Seat seat) =>
+        io.Publish(new HoleCardsRevealed(seat.Name, seat.HoleCards));
 
-    public static void ShowCommunityCards(IGameIO io, IReadOnlyList<Card> community)
+    public static void ShowCommunityCards(IGameChannel io, IReadOnlyList<Card> community)
     {
         if (community.Count == 0)
             return;
 
-        io.WriteLine("Community cards:");
-        io.WriteLine(RenderCardRow(community));
+        io.Publish(new CommunityCardsRevealed(community));
     }
 
-    public static void ShowStacks(IGameIO io, IReadOnlyList<Seat> seats)
+    public static void ShowStacks(IGameChannel io, IReadOnlyList<Seat> seats)
     {
-        foreach (var seat in seats)
-        {
-            var status = seat.HasFolded ? "folded" : seat.IsAllIn ? "all-in" : "active";
-            io.WriteLine($"{seat.Name}: {seat.Chips} chips ({status})");
-        }
+        var lines = seats.Select(seat =>
+            new StackLine(seat.Name, seat.Chips, seat.HasFolded ? "folded" : seat.IsAllIn ? "all-in" : "active")).ToList();
+        io.Publish(new StacksStatus(lines));
     }
 }

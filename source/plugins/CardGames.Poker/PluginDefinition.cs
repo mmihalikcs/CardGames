@@ -1,3 +1,4 @@
+using CardGames.Domain.Interaction;
 using CardGames.Domain.Interfaces;
 using CardGames.Domain.Models;
 
@@ -15,9 +16,9 @@ public sealed class PokerPlugin : IPlugin
 
     public bool SupportsMultiplayer => true;
 
-    public IGameManager CreateGameManager(IGameIO io) => CreateGameManager(io, PokerVariants.TexasHoldem);
+    public IGameManager CreateGameManager(IGameChannel io) => CreateGameManager(io, PokerVariants.TexasHoldem);
 
-    public IGameManager CreateGameManager(IGameIO io, GameVariant variant) => variant.Key switch
+    public IGameManager CreateGameManager(IGameChannel io, GameVariant variant) => variant.Key switch
     {
         PokerVariants.TexasHoldemKey => new TexasHoldemGameManager(io),
         PokerVariants.OmahaKey => new OmahaGameManager(io),

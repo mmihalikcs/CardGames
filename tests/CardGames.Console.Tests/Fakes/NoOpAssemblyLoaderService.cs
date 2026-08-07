@@ -1,6 +1,6 @@
 using CardGames.Domain.Interfaces;
 
-namespace CardGames.Presentation.Tests.Fakes;
+namespace CardGames.Console.Tests.Fakes;
 
 internal sealed class NoOpAssemblyLoaderService : IAssemblyLoaderService
 {

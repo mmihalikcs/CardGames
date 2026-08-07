@@ -3,7 +3,7 @@ using CardGames.Domain.Interfaces;
 using CardGames.Domain.Models;
 using Microsoft.Extensions.Logging;
 
-namespace CardGames.Presentation.Services;
+namespace CardGames.Application.Services;
 
 public class SettingsService : ISettingsService
 {

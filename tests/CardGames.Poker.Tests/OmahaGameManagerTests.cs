@@ -30,14 +30,14 @@ public sealed class OmahaGameManagerTests
             C(Suit.Spades, Rank.Nine),
             C(Suit.Clubs, Rank.Eight),
         });
-        var io = new ScriptedGameIO(defaultResponse: "check");
+        var channel = new ScriptedGameChannel(defaultResponse: "check");
 
-        var manager = new OmahaGameManager(io, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
+        var manager = new OmahaGameManager(channel, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
         manager.StartGame();
 
         Assert.Equal(510, alice.Chips);
         Assert.Equal(490, bob.Chips);
-        Assert.Contains("Alice wins the pot of 20!", io.AllOutput);
+        Assert.Contains(channel.Published, e => e is PotAwarded { WinnerNames: ["Alice"], Total: 20 });
     }
 
     [Fact]
@@ -53,15 +53,15 @@ public sealed class OmahaGameManagerTests
             C(Suit.Clubs, Rank.Six), C(Suit.Hearts, Rank.Seven),
             C(Suit.Diamonds, Rank.Eight), C(Suit.Spades, Rank.Nine),
         });
-        var io = new ScriptedGameIO(new[] { "fold" });
+        var channel = new ScriptedGameChannel(new[] { "fold" });
 
-        var manager = new OmahaGameManager(io, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
+        var manager = new OmahaGameManager(channel, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
         manager.StartGame();
 
         Assert.True(alice.HasFolded);
         Assert.Equal(490, alice.Chips);
         Assert.Equal(510, bob.Chips);
-        Assert.Contains("Bob wins the pot of 20 uncontested!", io.AllOutput);
-        Assert.DoesNotContain("Community cards:", io.AllOutput);
+        Assert.Contains(channel.Published, e => e is UncontestedPotAwarded { WinnerName: "Bob", Total: 20 });
+        Assert.DoesNotContain(channel.Published, e => e is CommunityCardsRevealed);
     }
 }

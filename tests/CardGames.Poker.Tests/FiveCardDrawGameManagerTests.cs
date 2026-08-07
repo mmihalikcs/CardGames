@@ -27,16 +27,16 @@ public sealed class FiveCardDrawGameManagerTests
             C(Suit.Hearts, Rank.Jack), C(Suit.Diamonds, Rank.Six),
         });
         // Betting round 1 (check, check), draw phase (stand pat, stand pat), betting round 2 (check, check).
-        var io = new ScriptedGameIO(new[] { "check", "check", "", "", "check", "check" });
+        var channel = new ScriptedGameChannel(new[] { "check", "check", "", "", "check", "check" });
 
-        var manager = new FiveCardDrawGameManager(io, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
+        var manager = new FiveCardDrawGameManager(channel, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
         manager.StartGame();
 
         Assert.Equal(510, alice.Chips);
         Assert.Equal(490, bob.Chips);
-        Assert.Contains("Alice stands pat.", io.AllOutput);
-        Assert.Contains("Bob stands pat.", io.AllOutput);
-        Assert.Contains("Alice wins the pot of 20!", io.AllOutput);
+        Assert.Contains(channel.Published, e => e is SeatStoodPat { SeatName: "Alice" });
+        Assert.Contains(channel.Published, e => e is SeatStoodPat { SeatName: "Bob" });
+        Assert.Contains(channel.Published, e => e is PotAwarded { WinnerNames: ["Alice"], Total: 20 });
     }
 
     [Fact]
@@ -53,16 +53,16 @@ public sealed class FiveCardDrawGameManagerTests
             C(Suit.Diamonds, Rank.Eight), C(Suit.Hearts, Rank.Nine),
             C(Suit.Hearts, Rank.Ten), C(Suit.Diamonds, Rank.Jack),
         });
-        var io = new ScriptedGameIO(new[] { "fold" });
+        var channel = new ScriptedGameChannel(new[] { "fold" });
 
-        var manager = new FiveCardDrawGameManager(io, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
+        var manager = new FiveCardDrawGameManager(channel, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
         manager.StartGame();
 
         Assert.True(alice.HasFolded);
         Assert.Equal(490, alice.Chips);
         Assert.Equal(510, bob.Chips);
-        Assert.Contains("Bob wins the pot of 20 uncontested!", io.AllOutput);
-        Assert.DoesNotContain("Draw Phase", io.AllOutput);
+        Assert.Contains(channel.Published, e => e is UncontestedPotAwarded { WinnerName: "Bob", Total: 20 });
+        Assert.DoesNotContain(channel.Published, e => e is DrawPhaseStarted);
     }
 
     [Fact]
@@ -84,15 +84,15 @@ public sealed class FiveCardDrawGameManagerTests
             C(Suit.Hearts, Rank.Four), C(Suit.Hearts, Rank.King),
             C(Suit.Clubs, Rank.Ace), C(Suit.Clubs, Rank.King), C(Suit.Diamonds, Rank.King),
         });
-        var io = new ScriptedGameIO(new[] { "check", "check", "3 4 5", "", "check", "check" });
+        var channel = new ScriptedGameChannel(new[] { "check", "check", "3 4 5", "", "check", "check" });
 
-        var manager = new FiveCardDrawGameManager(io, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
+        var manager = new FiveCardDrawGameManager(channel, new Random(1), new List<Seat> { alice, bob }, deck, maxHands: 1);
         manager.StartGame();
 
         Assert.Equal(new[] { Rank.Ace, Rank.Ace, Rank.Ace, Rank.King, Rank.King }, alice.HoleCards.Select(c => c.Rank));
-        Assert.Contains("Alice draws 3 card(s).", io.AllOutput);
-        Assert.Contains("Bob stands pat.", io.AllOutput);
-        Assert.Contains("Alice wins the pot of 20!", io.AllOutput);
+        Assert.Contains(channel.Published, e => e is SeatDrew { SeatName: "Alice", Count: 3 });
+        Assert.Contains(channel.Published, e => e is SeatStoodPat { SeatName: "Bob" });
+        Assert.Contains(channel.Published, e => e is PotAwarded { WinnerNames: ["Alice"], Total: 20 });
         Assert.Equal(510, alice.Chips);
         Assert.Equal(490, bob.Chips);
     }

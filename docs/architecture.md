@@ -1,7 +1,7 @@
 # Architecture
 
 `CardGames` is a plugin-hosted console application for playing card games. A thin
-Presentation layer drives a console menu loop and delegates gameplay to game
+Console layer drives a console menu loop and delegates gameplay to game
 plugins that are discovered and loaded at runtime from `*.plugin.dll` files.
 
 ## Contents
@@ -26,8 +26,8 @@ folders:
 ```
 source/
   CardGames.Domain/          # models, enums, public interfaces - no dependencies
-  CardGames.Application/     # AssemblyLoaderService - depends on Domain only
-  CardGames.Presentation/    # console entry point, DI wiring, menu loop, SettingsService
+  CardGames.Application/     # AssemblyLoaderService, SettingsService - depends on Domain only
+  CardGames.Console/         # console entry point, DI wiring, menu loop
   plugins/
     CardGames.WAR/           # WAR plugin - depends on Domain only
     CardGames.GoFish/        # Go Fish plugin - depends on Domain only
@@ -35,7 +35,7 @@ source/
 tests/
   CardGames.Domain.Tests/
   CardGames.Application.Tests/
-  CardGames.Presentation.Tests/
+  CardGames.Console.Tests/
   CardGames.WAR.Tests/
   CardGames.GoFish.Tests/
   CardGames.Poker.Tests/
@@ -53,24 +53,61 @@ depends on, directly or indirectly:
 - Enums: `Suit`, `Rank`
 - Interfaces: `IPlugin`, `IGameManager`, `IGameIO`, `IAssemblyLoaderService`,
   `ISettingsService`
+- `Interaction/`: the structured presentation contract plugins actually build
+  against - `GameEvent`, `GamePrompt`/`PromptResponse`, `IGameChannel`,
+  `TextGameChannel` (see "Presentation contract" below)
 
 Because plugins only reference Domain, a plugin assembly never needs to
-reference Presentation or Application, which keeps the plugin surface area
+reference Console or Application, which keeps the plugin surface area
 small and stable.
 
 **CardGames.Application** implements `IAssemblyLoaderService` via
 `AssemblyLoaderService` — the plugin discovery/load/unload logic described
-below.
+below — and `ISettingsService` via `SettingsService`, which persists
+`ApplicationSettings` as JSON under the user's local application data folder
+(`%APPDATA%/CardGames/settings.json` or platform equivalent). Both are
+application-level services shared by whichever front end hosts them; neither
+is specific to the console.
 
-**CardGames.Presentation** is the console entry point (`Program.cs`). It
+**CardGames.Console** is the console entry point (`Program.cs`). It
 builds a generic `Microsoft.Extensions.Hosting` host, registers services via
 DI, and runs a numbered console menu loop (`ConsoleRenderer`) for loading,
 playing, and unloading game plugins. `ConsoleGameIO` implements `IGameIO` on
-top of `Console.Write`/`Console.ReadLine`, which is the only I/O surface a
-plugin's `IGameManager` is allowed to touch. Presentation also owns the only
-`ISettingsService` implementation, `SettingsService`, which persists
-`ApplicationSettings` as JSON under the user's local application data folder
-(`%APPDATA%/CardGames/settings.json` or platform equivalent).
+top of `Console.Write`/`Console.ReadLine`; `Program.cs` wraps it in a
+`TextGameChannel` before handing it to a plugin (see "Presentation contract").
+
+## Presentation contract
+
+Plugins never see `IGameIO` directly - it's a raw text-transport primitive
+implemented only by `ConsoleGameIO` and `NetworkGameIO`. `IPlugin.CreateGameManager`
+takes an `IGameChannel` (`CardGames.Domain.Interaction`) instead, which
+separates *what happened* from *how it's described*:
+
+```csharp
+public interface IGameChannel
+{
+    void Publish(GameEvent gameEvent);           // a fact: "what happened", past tense
+    PromptResponse Await(GamePrompt prompt);      // a request: "what do you need from a seat"
+}
+```
+
+Each plugin defines its own `GameEvent` leaf types (e.g. WAR's `PileAwarded`,
+Poker's `SeatFolded`) with a `Describe()` override for text rendering; no
+plugin formats prose or parses raw input directly anymore. `GamePrompt` has
+just three generic kinds shared by every plugin - `ConfirmPrompt` (press
+enter), `ChoicePrompt` (a constrained choice, e.g. GoFish's rank ask or
+Poker's fold/check/call/raise), `TextPrompt` (free text, e.g. player names or
+Poker's discard-position list) - so channels never need plugin-specific
+knowledge to render or parse one.
+
+`TextGameChannel` (also in `CardGames.Domain.Interaction`) is the generic
+adapter that bridges this contract onto any existing `IGameIO`: it renders
+events/prompts via `Describe()` and parses the raw text answer back into a
+typed `PromptResponse`. This is what lets `ConsoleGameIO` and `NetworkGameIO`
+(and the whole SignalR/`ISeatChannel` plumbing under it) stay unchanged, plain
+text transports - `TextGameChannel` is constructed once, wrapping whichever
+`IGameIO` is in play, right before a plugin's `CreateGameManager` is called
+(see `Program.cs`'s Play case and `GameSessionManager.StartSessionAsync`).
 
 ## Plugin loading model
 
@@ -100,7 +137,7 @@ Because each plugin lives in its own collectible `AssemblyLoadContext`,
 to free the assembly without restarting the process. This isolation is
 intentional: new plugin functionality should go through this same
 discover/load/unload lifecycle rather than a direct project reference from
-Presentation to a plugin project.
+Console to a plugin project.
 
 `IPlugin` itself is small and declarative:
 
@@ -110,15 +147,15 @@ public interface IPlugin
     string Name { get; }
     string Description { get; }
     string Version { get; }
-    IGameManager CreateGameManager(IGameIO io);
+    IGameManager CreateGameManager(IGameChannel io);
 
     IReadOnlyList<GameVariant> Variants => Array.Empty<GameVariant>();
-    IGameManager CreateGameManager(IGameIO io, GameVariant variant) => CreateGameManager(io);
+    IGameManager CreateGameManager(IGameChannel io, GameVariant variant) => CreateGameManager(io);
 }
 ```
 
 A plugin with no variants (WAR, Go Fish) only needs to implement
-`CreateGameManager(IGameIO)`. A plugin that offers multiple modes (Poker)
+`CreateGameManager(IGameChannel)`. A plugin that offers multiple modes (Poker)
 overrides `Variants` and the variant-aware `CreateGameManager` overload; the
 default interface implementations mean existing single-mode plugins needed
 zero source changes when the variants feature was added.
@@ -127,7 +164,8 @@ zero source changes when the variants feature was added.
 
 `Program.cs` wires up DI (`IAssemblyLoaderService`, `ISettingsService`,
 `IGameIO`, `ConsoleRenderer`) via a generic host, then loops on a menu with
-five options:
+five options. The "Play" case wraps the resolved `IGameIO` in a
+`TextGameChannel` before calling `CreateGameManager`:
 
 | # | Command | Behavior |
 |---|---------|----------|
@@ -194,8 +232,10 @@ Supporting engine types under `Engine/`:
 - `HandEvaluator`, `HandRank`, `HandCategory`, `ShowdownResolver` — best-hand
   evaluation and showdown resolution/pot award.
 - `PokerDeck` — deck management specific to the poker engine.
-- `TableRenderer` — console rendering of stacks, hole cards, and community
-  cards via `IGameIO`.
+- `TableRenderer` — publishes stack/hole-card/community-card events
+  (`StacksStatus`, `HoleCardsRevealed`, `CommunityCardsRevealed`) via
+  `IGameChannel`; `RenderCardRow`'s ASCII layout is called from those events'
+  `Describe()`.
 - `GameSettings` — tunables such as starting chips, ante amount, and min/max
   AI opponent counts.
 

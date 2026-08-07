@@ -1,10 +1,10 @@
+using CardGames.Application.Services;
 using CardGames.Domain.Interfaces;
 using CardGames.Domain.Models;
-using CardGames.Presentation.Services;
 using Microsoft.Extensions.Logging;
 using Xunit;
 
-namespace CardGames.Presentation.Tests.Services;
+namespace CardGames.Application.Tests.Services;
 
 public sealed class SettingsServiceTests : IDisposable
 {
