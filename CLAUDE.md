@@ -18,10 +18,10 @@ CI (`.github/workflows/dotnet.yml`) runs `dotnet restore`, `dotnet build --no-re
 
 `CardGames.Godot.Tests` (gdUnit4Net, see below) can't use xUnit's `[Trait]`/`--filter category=...` — its adapter needs `[TestCategory(...)]` and a `TestCategory=...` filter instead, so CI runs it as its own step:
 ```bash
-GODOT_BIN=/path/to/Godot_v4.6.2-stable_mono_linux.x86_64 dotnet test source/CardGames.Godot/Tests/CardGames.Godot.Tests.csproj --filter TestCategory=post-build   # CI gate for the Godot client
-GODOT_BIN=/path/to/Godot_v4.6.2-stable_mono_linux.x86_64 dotnet test source/CardGames.Godot/Tests/CardGames.Godot.Tests.csproj --filter TestCategory=test-suite  # slower/extensive Godot-client coverage
+GODOT_BIN=/path/to/Godot_v4.6.2-stable_mono_linux.x86_64 dotnet test source/CardGames.Godot/Tests/CardGames.Godot.Tests.csproj --filter TestCategory=post-build --settings source/CardGames.Godot/Tests/.runsettings   # CI gate for the Godot client
+GODOT_BIN=/path/to/Godot_v4.6.2-stable_mono_linux.x86_64 dotnet test source/CardGames.Godot/Tests/CardGames.Godot.Tests.csproj --filter TestCategory=test-suite --settings source/CardGames.Godot/Tests/.runsettings  # slower/extensive Godot-client coverage
 ```
-`GODOT_BIN` must point at a real Godot 4.6.2 mono executable — `[RequireGodotRuntime]` tests launch the actual engine headlessly.
+`GODOT_BIN` must point at a real Godot 4.6.2 mono executable. `--settings .../.runsettings` forces the `--headless` flag on the Godot process gdUnit4Net launches for `[RequireGodotRuntime]` tests — without it, that process tries to open a real display and fails outright on machines with none (discovery alone doesn't need it, only actual test execution does).
 
 Target framework is `net10.0` across all projects, with `Nullable` and `ImplicitUsings` enabled — keep new projects consistent with that.
 

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    gdUnit4Net launches a real Godot process to run RequireGodotRuntime tests, and unlike test
+    discovery it doesn't pass the headless flag by default - without it, Godot tries to open a
+    display server and fails outright on machines with none (e.g. GitHub Actions runners). The
+    headless flag is harmless locally too (no window needed to run tests), so this applies
+    everywhere, not just CI.
+-->
+<RunSettings>
+  <GdUnit4>
+    <Parameters>--headless</Parameters>
+  </GdUnit4>
+</RunSettings>
